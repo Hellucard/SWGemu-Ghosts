@@ -1,0 +1,7 @@
+includeFile("korriban/npcs/archaeologist_leader.lua")
+includeFile("korriban/npcs/korriban_bunker_protocol_droid.lua")
+includeFile("korriban/npcs/reltha_aiden.lua")
+includeFile("korriban/npcs/bex_delata.lua")
+includeFile("korriban/npcs/omor_rikan.lua")
+includeFile("korriban/npcs/taelan_delar.lua")
+includeFile("korriban/npcs/bray_terex.lua")

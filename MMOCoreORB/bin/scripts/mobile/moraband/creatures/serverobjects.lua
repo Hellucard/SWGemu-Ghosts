@@ -1,0 +1,5 @@
+includeFile("korriban/creatures/tukata.lua")
+includeFile("korriban/creatures/klor_slug.lua")
+includeFile("korriban/creatures/hssiss.lua")
+includeFile("korriban/creatures/terentatek.lua")
+includeFile("korriban/creatures/shyrack.lua")

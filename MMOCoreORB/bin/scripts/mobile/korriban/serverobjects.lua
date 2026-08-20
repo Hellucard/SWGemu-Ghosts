@@ -1,0 +1,2 @@
+includeFile("korriban/creatures/serverobjects.lua")
+includeFile("korriban/npcs/serverobjects.lua")
