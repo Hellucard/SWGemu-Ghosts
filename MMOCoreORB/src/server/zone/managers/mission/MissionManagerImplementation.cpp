@@ -616,6 +616,9 @@ void MissionManagerImplementation::populateMissionList(MissionTerminal* missionT
 void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObject* player, int counter, bool slicer) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
+	PlayerObject* ghost = player->getPlayerObject();
+	bool customMission = ghost != nullptr &&
+		ghost->getScreenPlayData("player_mission_creator", "enabled") == "1";
 
 	for (int i = 0; i < bagSize; ++i) {
 		Reference<MissionObject*> mission = missionBag->getContainerObject(i).castTo<MissionObject*>( );
@@ -631,12 +634,14 @@ void MissionManagerImplementation::randomizeGeneralTerminalMissions(CreatureObje
 			randomizeGenericDeliverMission(player, mission, Factions::FACTIONNEUTRAL);
 		}
 
-		if (slicer) {
+		if (slicer && !customMission) {
 			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
 		}
 
-		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
-		mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		if (!customMission) {
+			float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
+			mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		}
 
 		mission->setRefreshCounter(counter, true);
 	}
@@ -674,6 +679,19 @@ void MissionManagerImplementation::randomizeArtisanTerminalMissions(CreatureObje
 void MissionManagerImplementation::randomizeEntertainerTerminalMissions(CreatureObject* player, int counter, bool slicer) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
+	PlayerObject* ghost = player->getPlayerObject();
+	bool customMission = ghost != nullptr &&
+		ghost->getScreenPlayData("player_entertainer_mission_creator", "enabled") == "1";
+	uint32 customType = MissionTypes::DANCER;
+	int customReward = 100000;
+
+	if (customMission) {
+		if (ghost->getScreenPlayData("player_entertainer_mission_creator", "type") == "music")
+			customType = MissionTypes::MUSICIAN;
+
+		if (ghost->getScreenPlayData("player_entertainer_mission_creator", "duration") == "60")
+			customReward = 750000;
+	}
 
 	for (int i = 0; i < bagSize; ++i) {
 		Reference<MissionObject*> mission = missionBag->getContainerObject(i).castTo<MissionObject*>( );
@@ -683,18 +701,23 @@ void MissionManagerImplementation::randomizeEntertainerTerminalMissions(Creature
 		//Clear mission type before calling mission generators.
 		mission->setTypeCRC(0);
 
-		if (i < 6) {
+		if (customMission) {
+			randomizeGenericEntertainerMission(player, mission, Factions::FACTIONNEUTRAL, customType);
+			mission->setRewardCredits(customReward);
+		} else if (i < 6) {
 			randomizeGenericEntertainerMission(player, mission, Factions::FACTIONNEUTRAL, MissionTypes::DANCER);
 		} else if (i < 12) {
 			randomizeGenericEntertainerMission(player, mission, Factions::FACTIONNEUTRAL, MissionTypes::MUSICIAN);
 		}
 
-		if (slicer) {
+		if (slicer && !customMission) {
 			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
 		}
 
-		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
-		mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		if (!customMission) {
+			float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
+			mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		}
 
 		mission->setRefreshCounter(counter, true);
 	}
@@ -757,6 +780,9 @@ void MissionManagerImplementation::randomizeBountyTerminalMissions(CreatureObjec
 void MissionManagerImplementation::randomizeFactionTerminalMissions(CreatureObject* player, int counter, bool slicer, const uint32 faction) {
 	SceneObject* missionBag = player->getSlottedObject("mission_bag");
 	int bagSize = missionBag->getContainerObjectsSize();
+	PlayerObject* ghost = player->getPlayerObject();
+	bool customMission = ghost != nullptr &&
+		ghost->getScreenPlayData("player_mission_creator", "enabled") == "1";
 
 	int numberOfCraftingMissions = 0;
 	int numberOfReconMissions = 0;
@@ -791,12 +817,14 @@ void MissionManagerImplementation::randomizeFactionTerminalMissions(CreatureObje
 			}
 		}
 
-		if (slicer) {
+		if (slicer && !customMission) {
 			mission->setRewardCredits(mission->getRewardCredits() * 1.5);
 		}
 
-		float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
-		mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		if (!customMission) {
+			float cityBonus = 1.f + player->getSkillMod("private_spec_missions") / 100.f;
+			mission->setRewardCredits(mission->getRewardCredits() * cityBonus);
+		}
 
 		mission->setRefreshCounter(counter, true);
 	}
@@ -832,8 +860,25 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 		difficulty = 4;
 
 	int diffDisplay = difficultyLevel < 5 ? 4 : difficultyLevel;
+	PlayerObject* targetGhost = player->getPlayerObject();
+	bool customMission = targetGhost != nullptr &&
+		targetGhost->getScreenPlayData("player_mission_creator", "enabled") == "1";
 
-	if (player->isGrouped()) {
+	int levelChoice = 0;
+
+	if (customMission) {
+		levelChoice = Math::max(
+			1,
+			Math::min(
+				250,
+				Integer::valueOf(
+					targetGhost->getScreenPlayData("player_mission_creator", "level"))));
+
+		difficultyLevel = levelChoice;
+		diffDisplay = levelChoice;
+	}
+
+	if (!customMission && player->isGrouped()) {
 		bool includeFactionPets = faction != Factions::FACTIONNEUTRAL || ConfigManager::instance()->includeFactionPetsForMissionDifficulty();
 		Reference<GroupObject*> group = player->getGroup();
 
@@ -841,7 +886,7 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 			Locker locker(group);
 			diffDisplay += group->getGroupLevel(includeFactionPets);
 		}
-	} else {
+	} else if (!customMission) {
 		diffDisplay += playerLevel;
 	}
 
@@ -869,9 +914,31 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 	while (!foundPosition && maximumNumberOfTries-- > 0) {
 		foundPosition = true;
 
-		int distance = destroyMissionBaseDistance + destroyMissionDifficultyDistanceFactor * difficultyLevel;
-		distance += System::random(destroyMissionRandomDistance) + System::random(destroyMissionDifficultyRandomDistance * difficultyLevel);
-		startPos = player->getWorldCoordinate((float)distance, (float)System::random(360), false);
+		int distance;
+		float direction;
+
+		if (customMission) {
+			distance = 1500;
+			direction = Float::valueOf(
+				targetGhost->getScreenPlayData("player_mission_creator", "direction"));
+
+			if (direction <= 0)
+				direction = (float)System::random(360);
+		} else {
+			distance = destroyMissionBaseDistance +
+				destroyMissionDifficultyDistanceFactor * difficultyLevel;
+
+			distance += System::random(destroyMissionRandomDistance) +
+				System::random(
+					destroyMissionDifficultyRandomDistance * difficultyLevel);
+
+			direction = (float)System::random(360);
+		}
+
+		startPos = player->getWorldCoordinate(
+			(float)distance,
+			direction,
+			false);
 
 		if (zone->isWithinBoundaries(startPos)) {
 			float height = zone->getHeight(startPos.getX(), startPos.getY());
@@ -918,8 +985,31 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 	mission->setTargetTemplate(templateObject);
 	mission->setTargetOptionalTemplate(lairTemplate);
 
-	int reward = destroyMissionBaseReward + destroyMissionDifficultyRewardFactor * difficultyLevel;
-	reward += System::random(destroyMissionRandomReward) + System::random(destroyMissionDifficultyRandomReward * difficultyLevel);
+	int reward;
+
+	if (customMission) {
+		reward = levelChoice < 10 ?
+			levelChoice * 200 :
+			2000 + ((levelChoice - 10) * 998000) / 240;
+
+		String missionTypeChoice =
+			targetGhost->getScreenPlayData("player_mission_creator", "type");
+
+		if (missionTypeChoice == "single")
+			reward = (reward * 3) / 4;
+
+		reward = Math::min(1000000, reward);
+	} else {
+		reward =
+			destroyMissionBaseReward +
+			destroyMissionDifficultyRewardFactor * difficultyLevel;
+
+		reward +=
+			System::random(destroyMissionRandomReward) +
+			System::random(
+				destroyMissionDifficultyRandomReward * difficultyLevel);
+	}
+
 	mission->setRewardCredits(reward);
 
 	mission->setMissionDifficulty(difficultyLevel, diffDisplay, difficulty);
@@ -1871,6 +1961,55 @@ LairSpawn* MissionManagerImplementation::getRandomLairSpawn(CreatureObject* play
 
 	if (availableLairList == nullptr || availableLairList->size() == 0) {
 		return nullptr;
+	}
+
+	PlayerObject* ghost = player->getPlayerObject();
+	bool customMission = ghost != nullptr &&
+		ghost->getScreenPlayData("player_mission_creator", "enabled") == "1";
+
+	if (customMission && type == MissionTypes::DESTROY) {
+		String requestedTemplate =
+			ghost->getScreenPlayData("player_mission_creator", "template");
+
+		String requestedType =
+			ghost->getScreenPlayData("player_mission_creator", "type");
+
+		Vector<LairSpawn*> matchingSpawns;
+
+		for (int i = 0; i < availableLairList->size(); ++i) {
+			LairSpawn* spawn = availableLairList->get(i);
+
+			if (spawn == nullptr)
+				continue;
+
+			String templateName = spawn->getLairTemplateName();
+
+			// Exact creature/lair chosen from the terminal catalog.
+			if (!requestedTemplate.isEmpty() &&
+				templateName == requestedTemplate) {
+				return spawn;
+			}
+
+			// If Lua could not enumerate the catalog, preserve the player's
+			// Single Creature vs Nest/Lair selection.
+			bool isSingle =
+				templateName.contains("boss_01");
+
+			bool isNest =
+				templateName.contains("_lair_") ||
+				templateName.contains("_nest_");
+
+			if (requestedTemplate.isEmpty() &&
+				((requestedType == "single" && isSingle) ||
+				 (requestedType == "nest" && isNest))) {
+				matchingSpawns.add(spawn);
+			}
+		}
+
+		if (!matchingSpawns.isEmpty()) {
+			return matchingSpawns.get(
+				System::random(matchingSpawns.size() - 1));
+		}
 	}
 
 	bool foundLair = false;
