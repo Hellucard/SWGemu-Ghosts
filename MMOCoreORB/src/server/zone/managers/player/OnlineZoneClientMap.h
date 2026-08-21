@@ -108,13 +108,18 @@ private:
 				<< ", '" << ipAddress << "'"
 				<< ", " << logout
 				<< ", " << onlineCount
-				<< ");";
+				<< ") ON DUPLICATE KEY UPDATE "
+				<< "galaxy_id = VALUES(galaxy_id), "
+				<< "logout = VALUES(logout), "
+				<< "online_count = VALUES(online_count), "
+				<< "timestamp = CURRENT_TIMESTAMP;";
 		else
 			query << "insert into account_ips (account_id, ip, logout) values"
 				<< "(" << accountId
 				<< ", '" << ipAddress << "'"
 				<< ", " << logout
-				<< ");";
+				<< ") ON DUPLICATE KEY UPDATE "
+				<< "logout = VALUES(logout), timestamp = CURRENT_TIMESTAMP;";
 
 		try {
 			ServerDatabase::instance()->executeStatement(query);

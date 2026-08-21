@@ -389,7 +389,12 @@ void InstallationObjectImplementation::updateHopper(Time& workingTime, bool shut
 
 	int elapsedTime = (harvestUntil - lastHopperUpdate);
 
-	float harvestAmount = (elapsedTime / 60.0) * (spawnDensity * getExtractionRate());
+	// Harvesters operate at twice the normal collection speed and collect four
+	// times the normal amount per collection period (8x total throughput).
+	constexpr float harvestSpeedMultiplier = 2.0f;
+	constexpr float harvestAmountMultiplier = 4.0f;
+	float harvestAmount = (elapsedTime / 60.0f) * harvestSpeedMultiplier *
+		(spawnDensity * getExtractionRate()) * harvestAmountMultiplier;
 
 	int availableCapacity = (int)(getHopperSizeMax() - getHopperSize());
 	harvestAmount = harvestAmount > availableCapacity ? availableCapacity : harvestAmount;
@@ -737,7 +742,7 @@ float InstallationObjectImplementation::getActualRate() {
 	if (resourceHopper.size() == 0)
 		return 0;
 
-	return extractionRate * spawnDensity;
+	return extractionRate * spawnDensity * 2.0f * 4.0f;
 }
 
 void InstallationObjectImplementation::setExtractionRate(float rate){
