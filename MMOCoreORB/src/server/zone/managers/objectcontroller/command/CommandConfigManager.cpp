@@ -161,7 +161,10 @@ void CommandConfigManager::loadCommandData(const String& filename) {
 			slashCommand = createCommand(nameLower);
 
 			if (slashCommand == nullptr) {
-				error("Could not create command " + name);
+				// Some client command tables contain legacy or blank rows for which
+				// this server branch has no implementation. They are intentionally
+				// ignored instead of being reported as server failures.
+				info("Skipping unsupported client command row '" + name + "'.");
 				continue;
 			}
 
