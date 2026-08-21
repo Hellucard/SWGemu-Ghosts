@@ -2066,14 +2066,9 @@ UnicodeString ChatManagerImplementation::formatMessage(const UnicodeString& mess
 }
 
 String ChatManagerImplementation::getTaggedName(PlayerObject* ghost, const String& name) {
-	String taggedName = name;
-
-	if (ghost->hasGodMode()) {
-		String tag = PermissionLevelList::instance()->getPermissionTag(ghost->getAdminLevel()).toString();
-		taggedName = name + " [" + tag + "]";
-	}
-
-	return taggedName;
+	// Do not expose staff status in chat. Permissions and God Mode remain
+	// unchanged; only the public-facing staff tag is suppressed.
+	return name;
 }
 
 void ChatManagerImplementation::handleChatCreateRoom(CreatureObject* player, uint8 permissionFlag, uint8 moderationFlag, const String& roomPath, const String& roomTitle, int requestID) {
