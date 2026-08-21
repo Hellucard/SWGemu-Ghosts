@@ -105,7 +105,7 @@ function JediTrials:droppedSkillDuringTrials(pPlayer, pSkill)
 	return 0
 end
 
-function JediTrials:unlockJediPadawan(pPlayer, dontSendSui)
+function JediTrials:unlockJediPadawan(pPlayer, dontSendSui, bypassRequirements)
 	if (pPlayer == nil) then
 		return
 	end
@@ -124,10 +124,18 @@ function JediTrials:unlockJediPadawan(pPlayer, dontSendSui)
 	end
 
 	if (not CreatureObject(pPlayer):hasSkill("force_title_jedi_rank_01")) then
-		awardSkill(pPlayer, "force_title_jedi_rank_01")
+		awardSkill(
+			pPlayer,
+			"force_title_jedi_rank_01",
+			bypassRequirements == true
+		)
 	end
 
-	awardSkill(pPlayer, "force_title_jedi_rank_02")
+	awardSkill(
+		pPlayer,
+		"force_title_jedi_rank_02",
+		bypassRequirements == true
+	)
 	writeScreenPlayData(pPlayer, "PadawanTrials", "completedTrials", 1)
 
 	CreatureObject(pPlayer):playEffect("clienteffect/trap_electric_01.cef", "")

@@ -634,7 +634,7 @@ function holocron_grant_padawan(pCreature)
     PlayerObject(pGhost):setJediState(1)
 
     if JediTrials ~= nil and JediTrials.unlockJediPadawan ~= nil then
-        JediTrials:unlockJediPadawan(pCreature, true)
+        JediTrials:unlockJediPadawan(pCreature, true, true)
     else
         CreatureObject(pCreature):sendSystemMessage("\\#FF4444[Jedi System] \\#FFFFFFJediTrials not found.")
     end
