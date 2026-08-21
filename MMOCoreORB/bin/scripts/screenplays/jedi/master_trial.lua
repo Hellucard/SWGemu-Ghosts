@@ -697,10 +697,10 @@ function MasterTrial:doGrantNoviceMaster(pCreature, alignment)
     wsd(pCreature, "master_trial_notified", "0")  -- reset so phase 2 notification can fire
 
     if alignment == "dark" then
-        awardSkill(pCreature, "jedi_dark_lord_novice")
+        awardSkill(pCreature, "jedi_dark_lord_novice", true)
         CreatureObject(pCreature):sendSystemMessage("\\#FF4444 The dark side acknowledges your power. You are Dark Lord Novice. Train the enclave boxes. Return to me when you are ready for the final confrontation.")
     else
-        awardSkill(pCreature, "jedi_grand_master_novice")
+        awardSkill(pCreature, "jedi_grand_master_novice", true)
         CreatureObject(pCreature):sendSystemMessage("\\#AADDFF The Force acknowledges your dedication. You are Grand Master Novice. Train the enclave boxes. Return to me when you are ready for the final confrontation.")
     end
 
@@ -1106,10 +1106,10 @@ function MasterTrial:doGrantMasterBox(pCreature, alignment)
     if pCreature == nil then return end
 
     if alignment == "dark" then
-        awardSkill(pCreature, "jedi_dark_lord_master")
+        awardSkill(pCreature, "jedi_dark_lord_master", true)
         CreatureObject(pCreature):sendSystemMessage("\\#FF4444 You are Dark Lord Master. The galaxy will know your name.")
     else
-        awardSkill(pCreature, "jedi_grand_master_master")
+        awardSkill(pCreature, "jedi_grand_master_master", true)
         CreatureObject(pCreature):sendSystemMessage("\\#AADDFF You are Grand Master. The Force is with you. It has always been with you.")
     end
 

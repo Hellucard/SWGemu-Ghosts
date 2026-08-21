@@ -4091,20 +4091,35 @@ int DirectorManager::checkArgumentCount(lua_State* L, int args) {
 }
 
 int DirectorManager::awardSkill(lua_State* L) {
-	if (checkArgumentCount(L, 2) == 1) {
+	int parameterCount = lua_gettop(L);
+
+	if (parameterCount < 2 || parameterCount > 3) {
 		String err = "incorrect number of arguments passed to DirectorManager::awardSkill";
 		printTraceError(L, err);
 		ERROR_CODE = INCORRECT_ARGUMENTS;
 		return 0;
 	}
 
-	CreatureObject* creature = (CreatureObject*)lua_touserdata(L, -2);
-	String skillName = lua_tostring(L, -1);
+	CreatureObject* creature =
+		(CreatureObject*)lua_touserdata(L, 1);
 
-	if(creature == nullptr)
+	String skillName = lua_tostring(L, 2);
+
+	bool bypassRequirements = false;
+
+	if (parameterCount == 3)
+		bypassRequirements = lua_toboolean(L, 3);
+
+	if (creature == nullptr)
 		return 0;
 
-	SkillManager::instance()->awardSkill(skillName, creature, true, true, true);
+	SkillManager::instance()->awardSkill(
+		skillName,
+		creature,
+		true,
+		true,
+		true,
+		bypassRequirements);
 
 	return 0;
 }
