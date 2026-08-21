@@ -866,15 +866,13 @@ function HolocronJedi:pollRevanKill(pPlayer, params)
     local phase = tonumber(readScreenPlayData(pPlayer, "HolocronJedi", "master_trial_phase")) or 0
 
     if phase == 1 then
-        -- Phase 1 complete - set status and grant novice master skill via C++
+        -- Phase 1 complete - update status; Lua Master Trial handles the rank grant
         wsd(pPlayer, "jedi_status", "master_phase2")
-        CreatureObject(pPlayer):setScreenPlayState(1, "HolocronMasterGrantPending")
-        CreatureObject(pPlayer):sendSystemMessage("\\#FFD700 Revan falls. The trial is complete. Right-click your holocron to claim your title.")
+        CreatureObject(pPlayer):sendSystemMessage("\\#FFD700 Revan falls. The first Master trial is complete.")
     elseif phase == 3 then
-        -- Final phase complete - grant full master title via C++
+        -- Final phase complete - update status; Lua Master Trial handles the rank grant
         wsd(pPlayer, "jedi_status", "master")
-        CreatureObject(pPlayer):setScreenPlayState(1, "HolocronMasterFinalGrantPending")
-        CreatureObject(pPlayer):sendSystemMessage("\\#FFD700 Revan is defeated. The title is yours. Right-click your holocron to complete your ascension.")
+        CreatureObject(pPlayer):sendSystemMessage("\\#FFD700 Revan is defeated. Your final Master trial is complete.")
     end
 end
 
