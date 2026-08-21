@@ -284,6 +284,21 @@ void MissionManagerImplementation::handleMissionAccept(MissionTerminal* missionT
 				return;
 			} else {
 				addBountyHunterToPlayerBounty(targetID, player->getObjectID());
+
+				ManagedReference<CreatureObject*> target =
+					server->getObject(targetID).castTo<CreatureObject*>();
+
+				if (target != nullptr) {
+					if (target->hasSkill("jedi_grand_master_master") ||
+						target->hasSkill("jedi_dark_lord_master")) {
+						player->sendSystemMessage(
+							"\\#ff2020APEX TARGET WARNING: This contract is against a Grand Master or Dark Lord Master. Come fully prepared.");
+					} else if (target->hasSkill("jedi_grand_master_novice") ||
+						target->hasSkill("jedi_dark_lord_novice")) {
+						player->sendSystemMessage(
+							"\\#ff9b20HIGH-RISK TARGET: This Jedi is extremely dangerous. Come prepared.");
+					}
+				}
 			}
 		}
 	}
@@ -2260,9 +2275,21 @@ bool MissionManagerImplementation::isBountyValidForPlayer(CreatureObject* player
 		return false;
 
 	auto targetGhost = creature->getPlayerObject();
-	float terminalVisibilityThreshold = VisibilityManager::instance()->getTerminalVisThreshold();
 
-	if (targetGhost == nullptr || targetGhost->getVisibility() < terminalVisibilityThreshold)
+	if (targetGhost == nullptr)
+		return false;
+
+	float terminalVisibilityThreshold =
+		VisibilityManager::instance()->getTerminalVisThreshold();
+
+	bool isApexJedi =
+		creature->hasSkill("jedi_grand_master_master") ||
+		creature->hasSkill("jedi_dark_lord_master");
+
+	// Ghosts: Grand Masters and Dark Lord Masters remain valid bounty
+	// targets regardless of normal terminal visibility.
+	if (targetGhost->getVisibility() < terminalVisibilityThreshold &&
+		!isApexJedi)
 		return false;
 
 	auto playerGhost = player->getPlayerObject();
@@ -2460,6 +2487,15 @@ void MissionManagerImplementation::deactivateMissions(CreatureObject* player) {
 int MissionManagerImplementation::getRealBountyReward(CreatureObject* creo, PlayerBounty* bounty)  {
 	if (creo == nullptr || bounty == nullptr)
 		return 0;
+
+	// Ghosts elite Jedi bounty rewards.
+	if (creo->hasSkill("jedi_grand_master_master") ||
+		creo->hasSkill("jedi_dark_lord_master"))
+		return 2500000;
+
+	if (creo->hasSkill("jedi_grand_master_novice") ||
+		creo->hasSkill("jedi_dark_lord_novice"))
+		return 1000000;
 
 	if (System::getMiliTime() - bounty->getLastBountyDebuff() < playerBountyDebuffLength) {
 		ManagedReference<PlayerObject*> player = creo->getPlayerObject();
