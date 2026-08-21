@@ -616,6 +616,57 @@ void BountyMissionObjectiveImplementation::handlePlayerKilled(ManagedObject* arg
 
 	// Fail Mission if the target killed the owner
 	if (killerID == targetID && ownerID != killerID) {
+		PlayerObject* hunterGhost = owner->getPlayerObject();
+		int xpLoss = 0;
+
+		// Ghosts bounty failure penalty: lose 10% of current bounty hunter XP.
+		if (hunterGhost != nullptr) {
+			xpLoss = hunterGhost->getExperience("bountyhunter") / 10;
+
+			if (xpLoss > 0) {
+				PlayerManager* playerManager =
+					owner->getZoneServer()->getPlayerManager();
+
+				if (playerManager != nullptr) {
+					playerManager->awardExperience(
+						owner,
+						"bountyhunter",
+						-xpLoss,
+						true,
+						1.0f,
+						false);
+				}
+			}
+		}
+
+		// Lose 10% of total cash + bank credits.
+		int cashCredits = owner->getCashCredits();
+		int bankCredits = owner->getBankCredits();
+
+		int creditFee =
+			(int)(((int64)cashCredits + (int64)bankCredits) / 10);
+
+		int cashFee =
+			creditFee < cashCredits ? creditFee : cashCredits;
+
+		int bankFee = creditFee - cashFee;
+
+		if (cashFee > 0)
+			owner->subtractCashCredits(cashFee);
+
+		if (bankFee > 0)
+			owner->subtractBankCredits(bankFee);
+
+		StringBuffer penaltyMessage;
+		penaltyMessage
+			<< "Bounty failure penalty: "
+			<< xpLoss
+			<< " bounty hunter XP and "
+			<< creditFee
+			<< " credits lost.";
+
+		owner->sendSystemMessage(penaltyMessage.toString());
+
 		owner->sendSystemMessage("@mission/mission_generic:failed"); // Mission failed
 
 		if (killer->isPlayerCreature())
