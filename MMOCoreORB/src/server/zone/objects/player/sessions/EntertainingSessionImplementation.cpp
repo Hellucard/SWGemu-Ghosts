@@ -886,7 +886,9 @@ void EntertainingSessionImplementation::activateEntertainerBuff(CreatureObject* 
 		int campModTemp = 100;
 
 
-		float buffStrength = getEntertainerBuffStrength(creature, performanceType) / 100.0f;
+		// Ghosts tuning: applied entertainer buffs have four times the strength.
+		float buffStrength =
+			(getEntertainerBuffStrength(creature, performanceType) / 100.0f) * 4.0f;
 
 		if (buffStrength == 0)
 			return;
