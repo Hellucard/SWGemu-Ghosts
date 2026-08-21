@@ -137,14 +137,17 @@ void EntertainerMissionObjectiveImplementation::startCompleteTask() {
 		return;
 
 	if (isEntertaining && inMissionArea && object != nullptr && object->getParentID() != 0) {
+		ManagedReference<MissionObject*> mission = this->mission.get();
+		int completionMinutes = mission != nullptr && mission->getRewardCredits() >= 750000 ? 60 : 10;
+
 		if (completeTask == nullptr) {
 			completeTask = new CompleteMissionAfterCertainTimeTask(_this.getReferenceUnsafeStaticCast());
 		}
 
 		if (completeTask->isScheduled()) {
-			completeTask->reschedule(10 * 60 * 1000);
+			completeTask->reschedule(completionMinutes * 60 * 1000);
 		} else {
-			completeTask->schedule(10 * 60 * 1000);
+			completeTask->schedule(completionMinutes * 60 * 1000);
 		}
 	} else {
 		if (completeTask != nullptr && completeTask->isScheduled()) {
