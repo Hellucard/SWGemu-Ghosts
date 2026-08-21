@@ -667,7 +667,18 @@ bool LootManagerImplementation::createLoot(TransactionLog& trx, SceneObject* con
 		return false;
 	}
 
-	return createLootFromCollection(trx, container, lootCollection, creature->getLevel());
+	int creatureLevel = creature->getLevel();
+
+	// Low-level NPC holocron drop: levels 1-50 have a combined 1% chance
+	// to drop one holocron, split evenly between light and dark.
+	if (creatureLevel >= 1 && creatureLevel <= 50 && System::random(9999) < 100) {
+		const String holocronGroup =
+			System::random(1) == 0 ? "holocron_light" : "holocron_dark";
+
+		createLoot(trx, container, holocronGroup, creatureLevel, false);
+	}
+
+	return createLootFromCollection(trx, container, lootCollection, creatureLevel);
 }
 
 uint64 LootManagerImplementation::createLoot(TransactionLog& trx, SceneObject* container, ShipAiAgent* shipAgent) {
