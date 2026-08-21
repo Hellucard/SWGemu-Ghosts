@@ -19,6 +19,8 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/chat/ChatManager.h"
 #include "server/zone/objects/player/events/DisconnectClientEvent.h"
+#include "server/login/account/Account.h"
+#include "server/login/account/AccountManager.h"
 #include "server/zone/managers/collision/CollisionManager.h"
 #include "templates/params/creature/PlayerArrangement.h"
 #include "server/zone/packets/object/DataTransform.h"
@@ -45,6 +47,22 @@ public:
 
 		if (ghost == nullptr) {
 			return;
+		}
+
+		// Ghosts staff login repair:
+		// refresh the authenticated account directly from SQL and keep the
+		// character permission level synchronized with the account.
+		ManagedReference<Account*> account =
+			AccountManager::getAccount(client->getAccountID(), true);
+
+		if (account == nullptr)
+			account = ghost->getAccount();
+
+		if (account != nullptr &&
+			account->getAdminLevel() != ghost->getAdminLevel()) {
+			zoneServer->getPlayerManager()->updatePermissionLevel(
+				player,
+				account->getAdminLevel());
 		}
 
 		if (ghost->getAdminLevel() == 0 && (zoneServer->getConnectionCount() >= zoneServer->getServerCap())) {
