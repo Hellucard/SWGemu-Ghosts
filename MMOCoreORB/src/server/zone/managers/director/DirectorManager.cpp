@@ -362,6 +362,9 @@ void DirectorManager::startGlobalScreenPlays() {
 	Timer profileAll;
 	profileAll.start();
 
+	Lua* lua = getLuaInstance();
+	lua_State* state = lua->getLuaState();
+
 	for (int i = 0; i < screenPlays.size(); ++i) {
 		String screenPlay = screenPlays.elementAt(i).getKey();
 		bool start = screenPlays.elementAt(i).getValue();
@@ -373,6 +376,24 @@ void DirectorManager::startGlobalScreenPlays() {
 		}
 
 		if (start) {
+			lua_getglobal(state, screenPlay.toCharArray());
+			bool hasTable = lua_istable(state, -1);
+			bool hasStart = false;
+
+			if (hasTable) {
+				lua_getfield(state, -1, "start");
+				hasStart = lua_isfunction(state, -1);
+				lua_pop(state, 1);
+			}
+
+			lua_pop(state, 1);
+
+			if (!hasStart) {
+				warning("Skipping auto-start screenplay '" + screenPlay +
+					"': no start function is defined.");
+				continue;
+			}
+
 			Timer profileStart;
 			profileStart.start();
 			startScreenPlay(nullptr, screenPlay);
