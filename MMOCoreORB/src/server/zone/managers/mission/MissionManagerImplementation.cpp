@@ -704,8 +704,9 @@ void MissionManagerImplementation::randomizeEntertainerTerminalMissions(Creature
 		if (ghost->getScreenPlayData("player_entertainer_mission_creator", "type") == "music")
 			customType = MissionTypes::MUSICIAN;
 
-		if (ghost->getScreenPlayData("player_entertainer_mission_creator", "duration") == "60")
-			customReward = 750000;
+		// Ghosts custom entertainer missions are always
+		// 10 minutes for 100,000 credits.
+		customReward = 100000;
 	}
 
 	for (int i = 0; i < bagSize; ++i) {
@@ -1003,9 +1004,12 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 	int reward;
 
 	if (customMission) {
+		// Ghosts custom mission rewards:
+		// level 10 starts at 2,000 credits and scales to
+		// a maximum of 250,000 credits at level 250.
 		reward = levelChoice < 10 ?
 			levelChoice * 200 :
-			2000 + ((levelChoice - 10) * 998000) / 240;
+			2000 + ((levelChoice - 10) * 248000) / 240;
 
 		String missionTypeChoice =
 			targetGhost->getScreenPlayData("player_mission_creator", "type");
@@ -1013,7 +1017,7 @@ void MissionManagerImplementation::randomizeGenericDestroyMission(CreatureObject
 		if (missionTypeChoice == "single")
 			reward = (reward * 3) / 4;
 
-		reward = Math::min(1000000, reward);
+		reward = Math::min(250000, reward);
 	} else {
 		reward =
 			destroyMissionBaseReward +
