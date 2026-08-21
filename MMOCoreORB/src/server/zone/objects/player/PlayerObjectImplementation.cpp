@@ -1818,14 +1818,37 @@ void PlayerObjectImplementation::notifyOnline() {
 
 	MissionManager* missionManager = zoneServer->getMissionManager();
 
-	if (missionManager != nullptr && playerCreature->hasSkill("force_title_jedi_rank_02")) {
+	if (missionManager != nullptr) {
 		uint64 id = playerCreature->getObjectID();
 
-		if (!missionManager->hasPlayerBountyTargetInList(id))
-			missionManager->addPlayerToBountyList(id, calculateBhReward());
-		else {
-			missionManager->updatePlayerBountyReward(id, calculateBhReward());
-			missionManager->updatePlayerBountyOnlineStatus(id, true);
+		bool isJedi =
+			playerCreature->hasSkill("force_title_jedi_rank_02");
+
+		bool isApexJedi =
+			playerCreature->hasSkill("jedi_grand_master_master") ||
+			playerCreature->hasSkill("jedi_dark_lord_master");
+
+		bool isHighRiskJedi =
+			isApexJedi ||
+			playerCreature->hasSkill("jedi_grand_master_novice") ||
+			playerCreature->hasSkill("jedi_dark_lord_novice");
+
+		int bountyReward = 0;
+
+		if (isApexJedi)
+			bountyReward = 2500000;
+		else if (isHighRiskJedi)
+			bountyReward = 1000000;
+		else if (isJedi)
+			bountyReward = calculateBhReward();
+
+		if (bountyReward > 0) {
+			if (!missionManager->hasPlayerBountyTargetInList(id))
+				missionManager->addPlayerToBountyList(id, bountyReward);
+			else {
+				missionManager->updatePlayerBountyReward(id, bountyReward);
+				missionManager->updatePlayerBountyOnlineStatus(id, true);
+			}
 		}
 	}
 
