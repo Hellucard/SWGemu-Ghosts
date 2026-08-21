@@ -622,24 +622,180 @@ function holocron_grant_padawan(pCreature)
     local pGhost = CreatureObject(pCreature):getPlayerObject()
     if pGhost == nil then return end
 
-    wsd(pCreature, "jedi_status", "padawan")
+    -- ============================================================
+    -- Ghosts custom Jedi unlock
+    --
+    -- The holocron/gatekeeper path replaces the normal Village
+    -- progression, so grant the Force Sensitive foundation directly.
+    -- ============================================================
 
-    -- Grant village eligibility so awardSkill passes isVillageEligible in C++.
-    -- isVillageEligible requires VILLAGE_JEDI_PROGRESSION_HAS_VILLAGE_ACCESS (4)
-    -- and FS_VILLAGE_ELDER quest. Setting these screenplay states satisfies the check.
-    CreatureObject(pCreature):setScreenPlayState(4, "VillageJediProgression")
-    CreatureObject(pCreature):setScreenPlayState(8, "VillageJediProgression")
-    CreatureObject(pCreature):setScreenPlayState(32, "VillageJediProgression")
+    -- Root Force Sensitive skill.
+    if not CreatureObject(pCreature):hasSkill("force_title_jedi_novice") then
+        awardSkill(pCreature, "force_title_jedi_novice", true)
+    end
+
+    -- Mark every Village Force Sensitive branch as unlocked.
+    local fsBranches = {
+        "force_sensitive_combat_prowess_melee_accuracy",
+        "force_sensitive_combat_prowess_melee_speed",
+        "force_sensitive_combat_prowess_ranged_accuracy",
+        "force_sensitive_combat_prowess_ranged_speed",
+
+        "force_sensitive_crafting_mastery_assembly",
+        "force_sensitive_crafting_mastery_experimentation",
+        "force_sensitive_crafting_mastery_repair",
+        "force_sensitive_crafting_mastery_technique",
+
+        "force_sensitive_enhanced_reflexes_melee_defense",
+        "force_sensitive_enhanced_reflexes_ranged_defense",
+        "force_sensitive_enhanced_reflexes_survival",
+        "force_sensitive_enhanced_reflexes_vehicle_control",
+
+        "force_sensitive_heightened_senses_healing",
+        "force_sensitive_heightened_senses_luck",
+        "force_sensitive_heightened_senses_persuasion",
+        "force_sensitive_heightened_senses_surveying"
+    }
+
+    for i = 1, #fsBranches do
+        CreatureObject(pCreature):setScreenPlayState(
+            2,
+            "VillageUnlockScreenPlay:" .. fsBranches[i]
+        )
+    end
+
+    -- Grant every Force Sensitive profession tree.
+    -- awardSkill(..., true) bypasses the normal Village requirements.
+    local fsSkills = {
+        "force_sensitive_combat_prowess_novice",
+
+        "force_sensitive_combat_prowess_melee_accuracy_01",
+        "force_sensitive_combat_prowess_melee_accuracy_02",
+        "force_sensitive_combat_prowess_melee_accuracy_03",
+        "force_sensitive_combat_prowess_melee_accuracy_04",
+
+        "force_sensitive_combat_prowess_melee_speed_01",
+        "force_sensitive_combat_prowess_melee_speed_02",
+        "force_sensitive_combat_prowess_melee_speed_03",
+        "force_sensitive_combat_prowess_melee_speed_04",
+
+        "force_sensitive_combat_prowess_ranged_accuracy_01",
+        "force_sensitive_combat_prowess_ranged_accuracy_02",
+        "force_sensitive_combat_prowess_ranged_accuracy_03",
+        "force_sensitive_combat_prowess_ranged_accuracy_04",
+
+        "force_sensitive_combat_prowess_ranged_speed_01",
+        "force_sensitive_combat_prowess_ranged_speed_02",
+        "force_sensitive_combat_prowess_ranged_speed_03",
+        "force_sensitive_combat_prowess_ranged_speed_04",
+
+        "force_sensitive_combat_prowess_master",
+
+        "force_sensitive_crafting_mastery_novice",
+
+        "force_sensitive_crafting_mastery_assembly_01",
+        "force_sensitive_crafting_mastery_assembly_02",
+        "force_sensitive_crafting_mastery_assembly_03",
+        "force_sensitive_crafting_mastery_assembly_04",
+
+        "force_sensitive_crafting_mastery_experimentation_01",
+        "force_sensitive_crafting_mastery_experimentation_02",
+        "force_sensitive_crafting_mastery_experimentation_03",
+        "force_sensitive_crafting_mastery_experimentation_04",
+
+        "force_sensitive_crafting_mastery_repair_01",
+        "force_sensitive_crafting_mastery_repair_02",
+        "force_sensitive_crafting_mastery_repair_03",
+        "force_sensitive_crafting_mastery_repair_04",
+
+        "force_sensitive_crafting_mastery_technique_01",
+        "force_sensitive_crafting_mastery_technique_02",
+        "force_sensitive_crafting_mastery_technique_03",
+        "force_sensitive_crafting_mastery_technique_04",
+
+        "force_sensitive_crafting_mastery_master",
+
+        "force_sensitive_enhanced_reflexes_novice",
+
+        "force_sensitive_enhanced_reflexes_melee_defense_01",
+        "force_sensitive_enhanced_reflexes_melee_defense_02",
+        "force_sensitive_enhanced_reflexes_melee_defense_03",
+        "force_sensitive_enhanced_reflexes_melee_defense_04",
+
+        "force_sensitive_enhanced_reflexes_ranged_defense_01",
+        "force_sensitive_enhanced_reflexes_ranged_defense_02",
+        "force_sensitive_enhanced_reflexes_ranged_defense_03",
+        "force_sensitive_enhanced_reflexes_ranged_defense_04",
+
+        "force_sensitive_enhanced_reflexes_survival_01",
+        "force_sensitive_enhanced_reflexes_survival_02",
+        "force_sensitive_enhanced_reflexes_survival_03",
+        "force_sensitive_enhanced_reflexes_survival_04",
+
+        "force_sensitive_enhanced_reflexes_vehicle_control_01",
+        "force_sensitive_enhanced_reflexes_vehicle_control_02",
+        "force_sensitive_enhanced_reflexes_vehicle_control_03",
+        "force_sensitive_enhanced_reflexes_vehicle_control_04",
+
+        "force_sensitive_enhanced_reflexes_master",
+
+        "force_sensitive_heightened_senses_novice",
+
+        "force_sensitive_heightened_senses_healing_01",
+        "force_sensitive_heightened_senses_healing_02",
+        "force_sensitive_heightened_senses_healing_03",
+        "force_sensitive_heightened_senses_healing_04",
+
+        "force_sensitive_heightened_senses_luck_01",
+        "force_sensitive_heightened_senses_luck_02",
+        "force_sensitive_heightened_senses_luck_03",
+        "force_sensitive_heightened_senses_luck_04",
+
+        "force_sensitive_heightened_senses_persuasion_01",
+        "force_sensitive_heightened_senses_persuasion_02",
+        "force_sensitive_heightened_senses_persuasion_03",
+        "force_sensitive_heightened_senses_persuasion_04",
+
+        "force_sensitive_heightened_senses_surveying_01",
+        "force_sensitive_heightened_senses_surveying_02",
+        "force_sensitive_heightened_senses_surveying_03",
+        "force_sensitive_heightened_senses_surveying_04",
+
+        "force_sensitive_heightened_senses_master"
+    }
+
+    for i = 1, #fsSkills do
+        if not CreatureObject(pCreature):hasSkill(fsSkills[i]) then
+            awardSkill(pCreature, fsSkills[i], true)
+        end
+    end
+
+    -- Required for the Force progression tree to display correctly.
+    CreatureObject(pCreature):setScreenPlayState(
+        32,
+        "VillageJediProgression"
+    )
+
+    -- Set our custom progression state.
+    wsd(pCreature, "jedi_status", "padawan")
 
     PlayerObject(pGhost):setJediState(1)
 
+    -- Finish the standard Core3 Padawan setup, but bypass the normal
+    -- Village requirements for the Jedi title ranks.
     if JediTrials ~= nil and JediTrials.unlockJediPadawan ~= nil then
         JediTrials:unlockJediPadawan(pCreature, true, true)
     else
-        CreatureObject(pCreature):sendSystemMessage("\\#FF4444[Jedi System] \\#FFFFFFJediTrials not found.")
+        CreatureObject(pCreature):sendSystemMessage(
+            "\\#FF4444[Jedi System] \\#FFFFFFJediTrials not found."
+        )
+        return
     end
-end
 
+    CreatureObject(pCreature):sendSystemMessage(
+        "\\#AADDFF[Jedi System] \\#FFFFFFYour connection to the Force has awakened. You are now a Jedi Padawan."
+    )
+end
 
 function holocron_grant_knight(pCreature, alignment)
     if pCreature == nil then return end
