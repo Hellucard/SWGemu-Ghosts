@@ -9,8 +9,10 @@
 #include "server/zone/managers/objectcontroller/command/CommandConfigManager.h"
 #include "server/zone/managers/objectcontroller/command/CommandList.h"
 #include "server/zone/managers/skill/SkillModManager.h"
+#include "server/zone/managers/player/PermissionLevelList.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/objects/player/PlayerObject.h"
+#include "server/login/account/Account.h"
 
 void ObjectControllerImplementation::loadCommands() {
 	configManager = new CommandConfigManager(server);
@@ -89,9 +91,27 @@ float ObjectControllerImplementation::activateCommand(CreatureObject* object, un
 		object->debug() << "activating characterAbility " << characterAbility;
 
 		if (object->isPlayerCreature()) {
-			Reference<PlayerObject*> playerObject =  object->getSlottedObject("ghost").castTo<PlayerObject*>();
+			Reference<PlayerObject*> playerObject =
+				object->getSlottedObject("ghost").castTo<PlayerObject*>();
 
-			if (!playerObject->hasAbility(characterAbility)) {
+			const int administratorLevel =
+				PermissionLevelList::instance()->getLevelNumber("admin");
+
+			Account* account =
+				playerObject != nullptr ? playerObject->getAccount() : nullptr;
+
+			const int effectiveAdminLevel =
+				account != nullptr ?
+					Math::max((int)playerObject->getAdminLevel(), (int)account->getAdminLevel()) :
+					(playerObject != nullptr ? playerObject->getAdminLevel() : 0);
+
+			const bool isAdministrator =
+				effectiveAdminLevel >= administratorLevel;
+
+			// Full administrators are authorized by their account-backed level.
+			// This avoids stale character ability data swallowing admin commands.
+			if (!isAdministrator &&
+				(playerObject == nullptr || !playerObject->hasAbility(characterAbility))) {
 				object->clearQueueAction(actionCount, 0, 2);
 
 				return 0.f;
@@ -114,10 +134,33 @@ float ObjectControllerImplementation::activateCommand(CreatureObject* object, un
 	if (queueCommand->requiresAdmin()) {
 		try {
 			if (object->isPlayerCreature()) {
-				Reference<PlayerObject*> ghost = object->getSlottedObject("ghost").castTo<PlayerObject*>();
+				Reference<PlayerObject*> ghost =
+					object->getSlottedObject("ghost").castTo<PlayerObject*>();
 
-				if (ghost == nullptr || !ghost->hasGodMode() || !ghost->hasAbility(queueCommand->getQueueCommandName())) {
-					adminLog.warning() << object->getDisplayedName() << " attempted to use the '/" << queueCommand->getQueueCommandName() << "' command without permissions";
+				const int administratorLevel =
+					PermissionLevelList::instance()->getLevelNumber("admin");
+
+				Account* account =
+					ghost != nullptr ? ghost->getAccount() : nullptr;
+
+				const int effectiveAdminLevel =
+					account != nullptr ?
+						Math::max((int)ghost->getAdminLevel(), (int)account->getAdminLevel()) :
+						(ghost != nullptr ? ghost->getAdminLevel() : 0);
+
+				const bool isAdministrator =
+					effectiveAdminLevel >= administratorLevel;
+
+				// Full administrators are trusted by their account-backed level.
+				// Lower staff must still have God Mode and the command ability.
+				if (ghost == nullptr ||
+					(!isAdministrator &&
+					 (!ghost->hasGodMode() ||
+					  !ghost->hasAbility(queueCommand->getQueueCommandName())))) {
+					adminLog.warning() << object->getDisplayedName()
+						<< " attempted to use the '/"
+						<< queueCommand->getQueueCommandName()
+						<< "' command without permissions";
 
 					object->sendSystemMessage("@error_message:insufficient_permissions");
 					object->clearQueueAction(actionCount, 0, 2);
