@@ -5,6 +5,7 @@
 #ifndef LOOTCOMMAND_H_
 #define LOOTCOMMAND_H_
 
+#include "server/zone/Zone.h"
 #include "server/zone/objects/scene/SceneObject.h"
 #include "server/zone/managers/player/PlayerManager.h"
 #include "server/zone/managers/group/GroupLootTask.h"
@@ -47,8 +48,6 @@ public:
 		if (agent == nullptr)
 			return INVALIDTARGET;
 
-		Locker locker(agent, creature);
-
 		if (!agent->isDead() || creature->isDead())
 			return GENERALERROR;
 
@@ -57,7 +56,14 @@ public:
 			return GENERALERROR;
 		}
 
-		bool lootAll = arguments.toString().beginsWith("all");
+		String lootArguments = arguments.toString();
+
+		if (lootArguments.beginsWith("area"))
+			return lootArea(creature);
+
+		Locker locker(agent, creature);
+
+		bool lootAll = lootArguments.beginsWith("all");
 
 		// Get the corpse's inventory.
 		SceneObject* lootContainer = agent->getSlottedObject("inventory");
@@ -143,6 +149,60 @@ public:
 
 		if (task != nullptr)
 			task->execute();
+
+		return SUCCESS;
+	}
+
+	int lootArea(CreatureObject* creature) const {
+		Zone* zone = creature->getZone();
+
+		if (zone == nullptr)
+			return GENERALERROR;
+
+		SortedVector<ManagedReference<QuadTreeEntry*>> closeObjects;
+		zone->getInRangeObjects(
+			creature->getWorldPositionX(),
+			creature->getWorldPositionY(),
+			10.f,
+			&closeObjects,
+			true);
+
+		for (int i = 0; i < closeObjects.size(); ++i) {
+			ManagedReference<AiAgent*> corpse =
+				closeObjects.get(i).castTo<AiAgent*>();
+
+			if (corpse == nullptr || !corpse->isDead() || corpse->isPet())
+				continue;
+
+			// Do not loot through walls or across separate building cells.
+			if (corpse->getParentID() != creature->getParentID() ||
+				!corpse->isInRange(creature, 10.f))
+				continue;
+
+			SceneObject* lootContainer = corpse->getSlottedObject("inventory");
+
+			if (lootContainer == nullptr)
+				continue;
+
+			const ContainerPermissions* permissions =
+				lootContainer->getContainerPermissions();
+
+			if (permissions == nullptr)
+				continue;
+
+			uint64 ownerID = permissions->getOwnerID();
+
+			if (ownerID != creature->getObjectID() &&
+				ownerID != creature->getGroupID())
+				continue;
+
+			// Use normal "loot all" for each corpse so existing ownership,
+			// group-loot, inventory and credit handling remains authoritative.
+			creature->executeObjectControllerAction(
+				STRING_HASHCODE("loot"),
+				corpse->getObjectID(),
+				"all");
+		}
 
 		return SUCCESS;
 	}
