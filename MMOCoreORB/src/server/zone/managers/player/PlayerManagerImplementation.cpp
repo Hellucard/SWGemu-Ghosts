@@ -2617,6 +2617,16 @@ int PlayerManagerImplementation::awardExperience(CreatureObject* player, const S
 	if (player->hasBuff(BuffCRC::FOOD_XP_INCREASE) && !player->containsActiveSession(SessionFacadeType::CRAFTING))
 		buffMultiplier += player->getSkillModFromBuffs("xp_increase") / 100.f;
 
+	float ghostsXpMultiplier = 1.f;
+
+	if (amount > 0 &&
+		(xpType == "medical" ||
+		 xpType == "entertainer_healing" ||
+		 xpType == "resource_harvesting_inorganic" ||
+		 xpType == "resource_harvesting_organic")) {
+		ghostsXpMultiplier = 4.f;
+	}
+
 	int xp = 0;
 
 	trx.addState("applyModifiers", applyModifiers);
@@ -2626,8 +2636,12 @@ int PlayerManagerImplementation::awardExperience(CreatureObject* player, const S
 		trx.addState("buffMultiplier", buffMultiplier);
 		trx.addState("localMultiplier", localMultiplier);
 		trx.addState("globalExpMultiplier", globalExpMultiplier);
+		trx.addState("ghostsXpMultiplier", ghostsXpMultiplier);
 
-		xp = playerObject->addExperience(trx, xpType, (int) (amount * speciesModifier * buffMultiplier * localMultiplier * globalExpMultiplier));
+		xp = playerObject->addExperience(
+			trx,
+			xpType,
+			(int)(amount * speciesModifier * buffMultiplier * localMultiplier * globalExpMultiplier * ghostsXpMultiplier));
 	} else {
 		xp = playerObject->addExperience(trx, xpType, (int)amount);
 	}
