@@ -603,6 +603,15 @@ bool GCWManagerImplementation::hasTooManyBasesNearby(float x, float y) {
 }
 
 void GCWManagerImplementation::registerGCWBase(BuildingObject* building, bool initializeBase) {
+	if (building == nullptr)
+		return;
+
+	if (getDestructibleBuildingData(building) == nullptr) {
+		warning("Ignoring GCW registration for incompatible building template '" +
+			building->getObjectTemplate()->getFullTemplateString() + "'.");
+		return;
+	}
+
 	if (!hasBase(building)) {
 		if (building->getFaction() == Factions::FACTIONIMPERIAL)
 			imperialBases++;
