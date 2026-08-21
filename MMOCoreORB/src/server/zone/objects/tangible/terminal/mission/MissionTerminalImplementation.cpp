@@ -6,12 +6,17 @@
  */
 
 #include "server/zone/objects/tangible/terminal/mission/MissionTerminal.h"
+#include "server/zone/Zone.h"
 #include "server/zone/objects/creature/CreatureObject.h"
 #include "server/zone/packets/object/ObjectMenuResponse.h"
 #include "server/zone/objects/region/CityRegion.h"
 #include "server/zone/managers/city/CityManager.h"
 #include "server/zone/managers/city/CityRemoveAmenityTask.h"
 #include "server/zone/objects/player/sessions/SlicingSession.h"
+#include "server/zone/managers/director/DirectorManager.h"
+#include "server/zone/managers/creature/CreatureTemplateManager.h"
+#include "server/zone/managers/creature/SpawnGroup.h"
+#include "server/zone/objects/player/PlayerObject.h"
 
 void MissionTerminalImplementation::fillObjectMenuResponse(ObjectMenuResponse* menuResponse, CreatureObject* player) {
 	TerminalImplementation::fillObjectMenuResponse(menuResponse, player);
@@ -27,6 +32,14 @@ void MissionTerminalImplementation::fillObjectMenuResponse(ObjectMenuResponse* m
 		menuResponse->addRadialMenuItemToRadialID(73, 75, 3, "@city/city:east"); // East
 		menuResponse->addRadialMenuItemToRadialID(73, 76, 3, "@city/city:south"); // South
 		menuResponse->addRadialMenuItemToRadialID(73, 77, 3, "@city/city:west"); // West
+	}
+
+	if (terminalType == "general" || terminalType == "imperial" || terminalType == "rebel") {
+		menuResponse->addRadialMenuItem(114, 3, "Create Player Mission");
+	}
+
+	if (terminalType == "entertainer") {
+		menuResponse->addRadialMenuItem(115, 3, "Create Entertainer Mission");
 	}
 }
 
@@ -76,6 +89,73 @@ int MissionTerminalImplementation::handleObjectMenuSelect(CreatureObject* player
 
 		CityManager* cityManager = getZoneServer()->getCityManager();
 		cityManager->alignAmenity(city, player, _this.getReferenceUnsafeStaticCast(), selectedID - 74);
+
+		return 0;
+
+	} else if (selectedID == 114) {
+		PlayerObject* ghost = player->getPlayerObject();
+		Zone* zone = player->getZone();
+
+		if (ghost == nullptr || zone == nullptr)
+			return 0;
+
+		String groupName = zone->getZoneName() + "_destroy_missions";
+		SpawnGroup* group =
+			CreatureTemplateManager::instance()->getDestroyMissionGroup(groupName.hashCode());
+
+		int choiceCount = 0;
+
+		if (group != nullptr) {
+			const Vector<Reference<LairSpawn*> >& spawns = group->getSpawnList();
+
+			for (int i = 0; i < spawns.size(); ++i) {
+				LairSpawn* spawn = spawns.get(i);
+
+				if (spawn == nullptr)
+					continue;
+
+				String templateName = spawn->getLairTemplateName();
+
+				bool supported =
+					templateName.contains("boss_01") ||
+					templateName.contains("_lair_") ||
+					templateName.contains("_nest_");
+
+				if (!supported)
+					continue;
+
+				ghost->setScreenPlayData(
+					"player_mission_catalog",
+					"template" + String::valueOf(choiceCount),
+					templateName);
+
+				++choiceCount;
+			}
+		}
+
+		ghost->setScreenPlayData(
+			"player_mission_catalog",
+			"count",
+			String::valueOf(choiceCount));
+
+		Lua* lua = DirectorManager::instance()->getLuaInstance();
+
+		Reference<LuaFunction*> creator =
+			lua->createFunction("player_mission_creator", "openWindow", 0);
+
+		*creator << player;
+		creator->callFunction();
+
+		return 0;
+
+	} else if (selectedID == 115) {
+		Lua* lua = DirectorManager::instance()->getLuaInstance();
+
+		Reference<LuaFunction*> creator =
+			lua->createFunction("player_entertainer_mission_creator", "openWindow", 0);
+
+		*creator << player;
+		creator->callFunction();
 
 		return 0;
 	}
