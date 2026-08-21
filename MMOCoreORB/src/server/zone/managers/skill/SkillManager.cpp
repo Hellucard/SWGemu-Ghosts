@@ -460,7 +460,7 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 			creature->hasSkill("jedi_dark_lord_novice");
 
 		const int eliteJediBounty =
-			isApexJedi ? 10000000 : (isHighRiskJedi ? 7000000 : 0);
+			isApexJedi ? 2500000 : (isHighRiskJedi ? 1000000 : 0);
 
 		if (skill->getSkillName() == "force_title_jedi_rank_02") {
 			if (missionManager != nullptr)
