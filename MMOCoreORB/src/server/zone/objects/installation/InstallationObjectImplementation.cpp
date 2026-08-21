@@ -750,7 +750,10 @@ void InstallationObjectImplementation::setExtractionRate(float rate){
 }
 
 void InstallationObjectImplementation::setHopperSizeMax(float size){
-	hopperSizeMax = size;
+	// Ghosts custom harvester balance:
+	// All configured hopper capacities are increased to 10x normal.
+	constexpr float hopperCapacityMultiplier = 10.0f;
+	hopperSizeMax = size * hopperCapacityMultiplier;
 }
 
 void InstallationObjectImplementation::updateStructureStatus() {
