@@ -141,5 +141,12 @@ void ServerDatabase::updateDatabaseSchema() {
 	alterDatabase(1008,
 		"ALTER TABLE `account_log` MODIFY COLUMN `ip_address` VARCHAR(64);"
 	);
+
+	// Ghosts: keep one current account/IP record per galaxy so login/logout
+	// updates do not continually create duplicate account_ips rows.
+	alterDatabase(1009,
+		"ALTER TABLE `account_ips`"
+		" ADD UNIQUE KEY `uniq_account_galaxy_ip` (`account_id`,`galaxy_id`,`ip`);"
+	);
 }
 #endif // !WITH_SWGREALMS_API
