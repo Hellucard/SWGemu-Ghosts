@@ -323,7 +323,7 @@ void SkillManager::removeDroidCommands(PlayerObject* ghost) {
 	return true;
 }*/
 
-bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient, bool awardRequiredSkills, bool noXpRequired) {
+bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient, bool awardRequiredSkills, bool noXpRequired, bool bypassRequirements) {
 	auto skill = skillMap.get(skillName.hashCode());
 
 	if (skill == nullptr)
@@ -333,24 +333,26 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 	TransactionLog trx(TrxCode::SKILLTRAININGSYSTEM, creature);
 	trx.addState("skill", skillName);
 
-	//Check for required skills.
-	auto requiredSkills = skill->getSkillsRequired();
-	for (int i = 0; i < requiredSkills->size(); ++i) {
-		const String& requiredSkillName = requiredSkills->get(i);
-		auto requiredSkill = skillMap.get(requiredSkillName.hashCode());
+	if (!bypassRequirements) {
+		// Check for required skills.
+		auto requiredSkills = skill->getSkillsRequired();
 
-		if (requiredSkill == nullptr)
-			continue;
+		for (int i = 0; i < requiredSkills->size(); ++i) {
+			const String& requiredSkillName = requiredSkills->get(i);
+			auto requiredSkill = skillMap.get(requiredSkillName.hashCode());
 
-		if (awardRequiredSkills)
-			awardSkill(requiredSkillName, creature, notifyClient, awardRequiredSkills, noXpRequired);
+			if (requiredSkill == nullptr)
+				continue;
 
-		if (!creature->hasSkill(requiredSkillName))
+			if (awardRequiredSkills)
+				awardSkill(requiredSkillName, creature, notifyClient, awardRequiredSkills, noXpRequired);
+
+			if (!creature->hasSkill(requiredSkillName))
+				return false;
+		}
+
+		if (!canLearnSkill(skillName, creature, noXpRequired))
 			return false;
-	}
-
-	if (!canLearnSkill(skillName, creature, noXpRequired)) {
-		return false;
 	}
 
 	//If they already have the skill, then return true.
@@ -360,14 +362,16 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 	ManagedReference<PlayerObject*> ghost = creature->getPlayerObject();
 
 	if (ghost != nullptr) {
-		//Withdraw skill points.
-		ghost->addSkillPoints(-skill->getSkillPointsRequired());
+		if (!bypassRequirements) {
+			// Withdraw skill points.
+			ghost->addSkillPoints(-skill->getSkillPointsRequired());
 
-		//Witdraw experience.
-		if (!noXpRequired) {
-			TransactionLog trxExperience(TrxCode::EXPERIENCE, creature);
-			trxExperience.groupWith(trx);
-			ghost->addExperience(trxExperience, skill->getXpType(), -skill->getXpCost(), true);
+			// Withdraw experience.
+			if (!noXpRequired) {
+				TransactionLog trxExperience(TrxCode::EXPERIENCE, creature);
+				trxExperience.groupWith(trx);
+				ghost->addExperience(trxExperience, skill->getXpType(), -skill->getXpCost(), true);
+			}
 		}
 
 		creature->addSkill(skill, notifyClient);

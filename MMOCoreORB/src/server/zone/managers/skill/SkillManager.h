@@ -78,7 +78,7 @@ public:
 	void addDroidCommands(PlayerObject* ghost, const Vector<String>& abilityNames, bool notifyClient = true);
 	void removeDroidCommands(PlayerObject* ghost);
 
-	bool awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient = true, bool awardRequiredSkills = false, bool noXpRequired = false);
+	bool awardSkill(const String& skillName, CreatureObject* creature, bool notifyClient = true, bool awardRequiredSkills = false, bool noXpRequired = false, bool bypassRequirements = false);
 	void awardDraftSchematics(Skill* skill, PlayerObject* ghost, bool notifyClient = true);
 
 	bool surrenderSkill(const String& skillName, CreatureObject* creature, bool notifyClient = true, bool verifyFrs = true, bool allowPilot = false);
