@@ -450,9 +450,31 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 
 		MissionManager* missionManager = creature->getZoneServer()->getMissionManager();
 
+		const bool isApexJedi =
+			creature->hasSkill("jedi_grand_master_master") ||
+			creature->hasSkill("jedi_dark_lord_master");
+
+		const bool isHighRiskJedi =
+			isApexJedi ||
+			creature->hasSkill("jedi_grand_master_novice") ||
+			creature->hasSkill("jedi_dark_lord_novice");
+
+		const int eliteJediBounty =
+			isApexJedi ? 10000000 : (isHighRiskJedi ? 7000000 : 0);
+
 		if (skill->getSkillName() == "force_title_jedi_rank_02") {
 			if (missionManager != nullptr)
 				missionManager->addPlayerToBountyList(creature->getObjectID(), ghost->calculateBhReward());
+		} else if (eliteJediBounty > 0) {
+			if (missionManager != nullptr) {
+				if (!missionManager->hasPlayerBountyTargetInList(creature->getObjectID()))
+					missionManager->addPlayerToBountyList(creature->getObjectID(), eliteJediBounty);
+				else
+					missionManager->updatePlayerBountyReward(creature->getObjectID(), eliteJediBounty);
+
+				missionManager->updatePlayerBountyOnlineStatus(
+					creature->getObjectID(), ghost->isOnline());
+			}
 		} else if (skill->getSkillName().contains("force_discipline")) {
 			if (missionManager != nullptr)
 				missionManager->updatePlayerBountyReward(creature->getObjectID(), ghost->calculateBhReward());
