@@ -303,6 +303,11 @@ float ArmorObjectImplementation::getTypeValue(int type, float value) const {
 		}
 	}
 
+	// Ghosts tuning: lightsaber protection has a hard cap of 50%.
+	// Apply this after all template, component, experimentation and slicing bonuses.
+	if (type == SharedWeaponObjectTemplate::LIGHTSABER && newValue > 50)
+		newValue = 50;
+
 	return newValue;
 }
 
