@@ -108,8 +108,6 @@ function HolocronJedi:finishKnightGrant(pPlayer, params)
     if pGhost == nil then return end
 
     if CreatureObject(pPlayer):hasSkill("force_title_jedi_rank_03") then
-        CreatureObject(pPlayer):setScreenPlayState(0, "HolocronKnightSkillGranted")
-        CreatureObject(pPlayer):setScreenPlayState(0, "HolocronKnightGrantPending")
         return
     end
 end
@@ -658,55 +656,55 @@ function holocron_grant_knight(pCreature, alignment)
     writeScreenPlayData(pCreature, "JediTrials", "JediCouncil", tostring(councilType))
     CreatureObject(pCreature):setScreenPlayState(councilType, "HolocronKnightCouncil")
 
-    -- Set pending flag — C++ fillObjectMenuResponse grants force_title_jedi_rank_03
-    -- and force_rank_light/dark_novice with checkRequirements=false on next holocron interaction
-    CreatureObject(pCreature):setScreenPlayState(1, "HolocronKnightGrantPending")
+    -- Ghosts Jedi progression:
+    -- Grant Knight and FRS skills directly from Lua.
+    -- Third argument true bypasses normal skill requirements.
+    if not CreatureObject(pCreature):hasSkill("force_title_jedi_rank_03") then
+        awardSkill(pCreature, "force_title_jedi_rank_03", true)
+    end
 
-    -- Notify player to click holocron
     if alignment == "dark" then
-        CreatureObject(pCreature):sendSystemMessage("\\#FF4444 Your trial is complete. Right-click your holocron and select any option to receive your rank.")
+        if not CreatureObject(pCreature):hasSkill("force_rank_dark") then
+            awardSkill(pCreature, "force_rank_dark", true)
+        end
+
+        if not CreatureObject(pCreature):hasSkill("force_rank_dark_novice") then
+            awardSkill(pCreature, "force_rank_dark_novice", true)
+        end
     else
-        CreatureObject(pCreature):sendSystemMessage("\\#88CCFF Your trial is complete. Right-click your holocron and select any option to receive your rank.")
+        if not CreatureObject(pCreature):hasSkill("force_rank_light") then
+            awardSkill(pCreature, "force_rank_light", true)
+        end
+
+        if not CreatureObject(pCreature):hasSkill("force_rank_light_novice") then
+            awardSkill(pCreature, "force_rank_light_novice", true)
+        end
     end
 
-    -- Poll for C++ grant completion then call unlockJediKnight for FRS/faction/jediState
-    local playerID = SceneObject(pCreature):getObjectID()
-    writeScreenPlayData(pCreature, "HolocronJedi", "knight_grant_playerid", tostring(playerID))
-    createEvent(3000, "HolocronJedi", "pollKnightGrant", pCreature, alignment)
-end
-
-function HolocronJedi:pollKnightGrant(pPlayer, params)
-    if pPlayer == nil then return end
-
-    -- Re-resolve fresh pointer
-    local playerID = tonumber(readScreenPlayData(pPlayer, "HolocronJedi", "knight_grant_playerid"))
-    if playerID ~= nil and playerID ~= 0 then
-        local pFresh = getSceneObject(playerID)
-        if pFresh ~= nil then pPlayer = pFresh end
-    end
-
-    -- Check if C++ has granted the skills
-    if CreatureObject(pPlayer):getScreenPlayState("HolocronKnightSkillGranted") ~= 1 then
-        -- Not yet - remind and retry
-        CreatureObject(pPlayer):sendSystemMessage("\\#AAAAAA Right-click your holocron and select any option to complete your promotion.")
-        createEvent(5000, "HolocronJedi", "pollKnightGrant", pPlayer, params)
+    -- Finish normal Core3 Knight setup:
+    -- FRS council/rank, Jedi state, faction, robe, music, etc.
+    if JediTrials ~= nil and JediTrials.unlockJediKnight ~= nil then
+        JediTrials:unlockJediKnight(pCreature)
+    else
+        CreatureObject(pCreature):sendSystemMessage(
+            "\\#FF4444[Jedi System] \\#FFFFFFJediTrials.unlockJediKnight not found."
+        )
         return
     end
 
-    -- Clear flags
-    CreatureObject(pPlayer):setScreenPlayState(0, "HolocronKnightSkillGranted")
-    CreatureObject(pPlayer):setScreenPlayState(0, "HolocronKnightGrantPending")
+    -- Start Jedi hunter systems.
+    createEvent(5000, "JediHunters", "startHunting", pCreature, "")
+    createEvent(5500, "JediVisibilityHunters", "checkVisibility", pCreature, "")
 
-    -- Now call unlockJediKnight — player already has rank_03 so addSkill is skipped
-    -- This handles setFrsCouncil, setFrsRank, setJediState, faction, robe, music
-    if JediTrials ~= nil and JediTrials.unlockJediKnight ~= nil then
-        JediTrials:unlockJediKnight(pPlayer)
+    if alignment == "dark" then
+        CreatureObject(pCreature):sendSystemMessage(
+            "\\#FF4444[Jedi System] \\#FFFFFFYou have been recognized as a Dark Jedi Knight."
+        )
+    else
+        CreatureObject(pCreature):sendSystemMessage(
+            "\\#88CCFF[Jedi System] \\#FFFFFFYou have been recognized as a Jedi Knight."
+        )
     end
-
-    -- Start the Force affiliation hunter system
-    createEvent(5000, "JediHunters", "startHunting", pPlayer, "")
-    -- Start bounty hunter system if visibility already >= 75
-    createEvent(5500, "JediVisibilityHunters", "checkVisibility", pPlayer, "")
 end
 
 -- ============================================================
