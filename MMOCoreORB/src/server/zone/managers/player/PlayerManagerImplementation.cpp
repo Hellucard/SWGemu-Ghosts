@@ -3906,8 +3906,39 @@ void PlayerManagerImplementation::updatePermissionLevel(CreatureObject* targetPl
 			for (int i = 0; i < skillsToBeAdded->size(); ++i) {
 				const String& skill = skillsToBeAdded->get(i);
 				targetPlayer->sendSystemMessage("Staff skill granted: " + skill);
-				skillManager->awardSkill(skill, targetPlayer, false, true, true);
+
+				// Staff skills are godOnly. Bypass normal learning requirements.
+				skillManager->awardSkill(skill, targetPlayer, false, true, true, true);
+
+				// If the skill already existed, rebuild all of its transient abilities
+				// so the client receives the command table again after login.
+				Skill* staffSkill = skillManager->getSkill(skill);
+
+				if (staffSkill != nullptr) {
+					auto abilities = staffSkill->getAbilities();
+
+					for (int j = 0; j < abilities->size(); ++j) {
+						const String& abilityName = abilities->get(j);
+
+						if (targetPlayer->isOnline() && ghost->hasAbility(abilityName))
+							skillManager->removeAbility(ghost, abilityName, true);
+
+						skillManager->addAbility(
+							ghost,
+							abilityName,
+							targetPlayer->isOnline());
+					}
+				}
 			}
+
+			// Ensure the fundamental admin ability is always restored.
+			if (targetPlayer->isOnline() && ghost->hasAbility("admin"))
+				skillManager->removeAbility(ghost, "admin", true);
+
+			skillManager->addAbility(
+				ghost,
+				"admin",
+				targetPlayer->isOnline());
 		}
 	}
 
@@ -3921,7 +3952,9 @@ void PlayerManagerImplementation::updatePermissionName(CreatureObject* player, i
 	ghost->setPriviledgeFlag(priviledgeFlag);
 	//Send deltas
 	if (player->isOnline()) {
-		UnicodeString tag = permissionLevelList->getPermissionTag(permissionLevel);
+		// Ghosts: staff permission remains active but the visible world-name
+		// staff tag is deliberately suppressed.
+		UnicodeString tag = "";
 
 		TangibleObjectDeltaMessage3* tanod3 = new TangibleObjectDeltaMessage3(player);
 		tanod3->updateCustomName(player->getDisplayedName(), tag);
