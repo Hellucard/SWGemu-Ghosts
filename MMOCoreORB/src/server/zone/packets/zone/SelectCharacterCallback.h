@@ -19,6 +19,7 @@
 #include "server/zone/objects/player/PlayerObject.h"
 #include "server/chat/ChatManager.h"
 #include "server/zone/objects/player/events/DisconnectClientEvent.h"
+#include "server/zone/objects/player/events/RefreshAdminPermissionsTask.h"
 #include "server/login/account/Account.h"
 #include "server/login/account/AccountManager.h"
 #include "server/zone/managers/collision/CollisionManager.h"
@@ -389,6 +390,18 @@ public:
 		// Set the player online & notify
 		ghost->setOnline();
 		ghost->notifyOnline();
+
+		// Ghosts staff login repair:
+		// Re-send administrator skills and abilities after the client
+		// finishes constructing its slash-command table.
+		if (account != nullptr && account->getAdminLevel() > 0) {
+			Reference<RefreshAdminPermissionsTask*> refreshTask =
+				new RefreshAdminPermissionsTask(
+					player,
+					account->getAdminLevel());
+
+			refreshTask->schedule(5 * 1000);
+		}
 
 		auto chatManager = zoneServer->getChatManager();
 
