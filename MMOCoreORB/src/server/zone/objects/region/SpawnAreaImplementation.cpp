@@ -95,6 +95,11 @@ void SpawnAreaImplementation::buildSpawnList(Vector<uint32>* groupCRCs) {
 	for (int i = 0; i < groupCRCs->size(); i++) {
 		SpawnGroup* group = ctm->getSpawnGroup(groupCRCs->get(i));
 
+		if (group == nullptr) {
+			warning("Skipping missing spawn group CRC " + String::valueOf(groupCRCs->get(i)));
+			continue;
+		}
+
 		const Vector<Reference<LairSpawn*> >& spawnList = group->getSpawnList();
 
 		for (int j = 0; j < spawnList.size(); j++) {
