@@ -866,8 +866,10 @@ void EntertainingSessionImplementation::activateEntertainerBuff(CreatureObject* 
 		if (!canGiveEntertainBuff())
 			return;
 
-		// Returns the Number of Minutes for the Buff Duration
-		float buffDuration = getEntertainerBuffDuration(creature, performanceType);
+		// Returns the Number of Minutes for the Buff Duration.
+		// Ghosts tuning: applied entertainer buffs last four times longer.
+		float buffDuration =
+			getEntertainerBuffDuration(creature, performanceType) * 4.0f;
 
 		if (buffDuration * 60 < 10.0f) { //10 sec minimum buff duration
 			return;
