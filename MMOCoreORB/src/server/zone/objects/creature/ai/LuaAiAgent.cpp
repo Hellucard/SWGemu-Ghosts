@@ -42,6 +42,8 @@ Luna<LuaAiAgent>::RegType LuaAiAgent::Register[] = {
 		{ "getObjectID", &LuaSceneObject::getObjectID },
 		{ "getMovementState", &LuaAiAgent::getMovementState },
 		{ "setMovementState", &LuaAiAgent::setMovementState },
+		{ "addCreatureFlag", &LuaAiAgent::addCreatureFlag },
+		{ "removeCreatureFlag", &LuaAiAgent::removeCreatureFlag },
 		{ "setNextPosition", &LuaAiAgent::setNextPosition },
 		{ "getMaxDistance", &LuaAiAgent::getMaxDistance },
 		{ "generatePatrol", &LuaAiAgent::generatePatrol },
@@ -277,6 +279,32 @@ int LuaAiAgent::setMovementState(lua_State* L) {
 	Locker locker(realObject);
 
 	realObject->setMovementState(state);
+
+	return 0;
+}
+
+int LuaAiAgent::addCreatureFlag(lua_State* L) {
+	if (realObject == nullptr || !lua_isnumber(L, -1))
+		return 0;
+
+	unsigned int flag = lua_tointeger(L, -1);
+
+	Locker locker(realObject);
+
+	realObject->setCreatureBitmask(realObject->getCreatureBitmask() | flag);
+
+	return 0;
+}
+
+int LuaAiAgent::removeCreatureFlag(lua_State* L) {
+	if (realObject == nullptr || !lua_isnumber(L, -1))
+		return 0;
+
+	unsigned int flag = lua_tointeger(L, -1);
+
+	Locker locker(realObject);
+
+	realObject->setCreatureBitmask(realObject->getCreatureBitmask() & ~flag);
 
 	return 0;
 }

@@ -42,6 +42,8 @@ namespace ai {
 		int getTargetOfTargetID(lua_State* L);
 		int getMovementState(lua_State* L);
 		int setMovementState(lua_State* L);
+		int addCreatureFlag(lua_State* L);
+		int removeCreatureFlag(lua_State* L);
 		int setNextPosition(lua_State* L);
 		int getMaxDistance(lua_State* L);
 		int generatePatrol(lua_State* L);
