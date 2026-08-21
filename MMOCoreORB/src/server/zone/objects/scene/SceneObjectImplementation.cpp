@@ -187,6 +187,16 @@ void SceneObjectImplementation::loadTemplateData(SharedObjectTemplate* templateD
 	containerType = templateData->getContainerType();
 	containerVolumeLimit = templateData->getContainerVolumeLimit();
 
+	// Ghosts player storage policy.
+	const String& templatePath = templateData->getFullTemplateString();
+
+	if (templatePath == "object/tangible/inventory/character_inventory.iff") {
+		containerVolumeLimit = 100;
+	} else if (templatePath.contains("object/tangible/wearables/backpack/")) {
+		containerVolumeLimit =
+			(templatePath.contains("pouch") || templatePath.contains("fannypack")) ? 50 : 250;
+	}
+
 	if (templateData->getCollisionActionBlockFlags() == 255) { //loading meshes for line of sight
 		templateData->getPortalLayout();
 		templateData->getAppearanceTemplate();
