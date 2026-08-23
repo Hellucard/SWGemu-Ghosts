@@ -159,9 +159,10 @@ public:
 		if (zone == nullptr)
 			return GENERALERROR;
 
-		SortedVector<ManagedReference<QuadTreeEntry*>> closeObjects;
+		SortedVector<ManagedReference<TreeEntry*>> closeObjects;
 		zone->getInRangeObjects(
 			creature->getWorldPositionX(),
+			creature->getWorldPositionZ(),
 			creature->getWorldPositionY(),
 			10.f,
 			&closeObjects,

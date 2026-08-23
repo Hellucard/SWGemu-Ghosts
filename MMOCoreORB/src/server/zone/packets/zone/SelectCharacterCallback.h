@@ -118,15 +118,6 @@ public:
 		}
 #endif // WITH_SWGREALMS_API
 
-		// Repair duplicate ability entries left by older Ghosts admin/login code
-		// before the player's ability list is sent to the client.
-		int duplicateAbilitiesRemoved = ghost->getAbilityList()->deduplicateAbilities();
-
-		if (duplicateAbilitiesRemoved > 0) {
-			player->info("Removed " + String::valueOf(duplicateAbilitiesRemoved) +
-				" duplicate ability entries before login.", true);
-		}
-
 		// Tie client to player object
 		player->setClient(client);
 		client->setPlayer(player);
