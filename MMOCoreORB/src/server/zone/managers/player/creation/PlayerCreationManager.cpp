@@ -26,6 +26,7 @@
 #include "server/zone/managers/jedi/JediManager.h"
 #include "server/zone/objects/transaction/TransactionLog.h"
 #include "server/zone/managers/player/creation/SendJtlRecruitment.h"
+#include "server/zone/objects/tangible/weapon/WeaponObject.h"
 
 PlayerCreationManager::PlayerCreationManager() : Logger("PlayerCreationManager") {
 	setLogging(false);
@@ -321,7 +322,8 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 	auto maxchars = ConfigManager::instance()->getInt("Core3.PlayerCreationManager.MaxCharactersPerGalaxy", 10);
 
 	if (client->getCharacterCount(zoneServer.get()->getGalaxyID()) >= maxchars) {
-		ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are limited to 10 characters per galaxy.", 0x0);
+		ErrorMessage* errMsg = new ErrorMessage("Create Error",
+				"You are limited to " + String::valueOf(maxchars) + " characters per galaxy.", 0x0);
 		client->sendMessage(errMsg);
 
 		return false;
@@ -361,9 +363,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	String profession, customization, hairTemplate, hairCustomization;
 	callback->getSkill(profession);
-
-	if (profession.contains("jedi"))
-		profession = "crafting_artisan";
 
 	callback->getCustomizationString(customization);
 	callback->getHairObject(hairTemplate);
@@ -447,59 +446,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 				if (accountPermissionLevel > 0 && (accountPermissionLevel == 9 || accountPermissionLevel == 10 || accountPermissionLevel == 12 || accountPermissionLevel == 15)) {
 					playerManager->updatePermissionLevel(playerCreature, accountPermissionLevel);
-				}
-
-				if (accountPermissionLevel < 9) {
-#ifndef WITH_SWGREALMS_API
-					try {
-						StringBuffer query;
-						uint32 galaxyId = zoneServer.get()->getGalaxyID();
-						uint32 accountId = client->getAccountID();
-						query << "(SELECT UNIX_TIMESTAMP(c.creation_date) as t FROM characters as c WHERE c.account_id = " << accountId << " AND c.galaxy_id = " << galaxyId << " ORDER BY c.creation_date DESC) UNION (SELECT UNIX_TIMESTAMP(d.creation_date) FROM deleted_characters as d WHERE d.account_id = " << accountId << " AND d.galaxy_id = " << galaxyId << " ORDER BY d.creation_date DESC) ORDER BY t DESC LIMIT 1";
-
-						UniqueReference<ResultSet*> res(ServerDatabase::instance()->executeQuery(query));
-
-						if (res != nullptr && res->next()) {
-							uint32 sec = res->getUnsignedInt(0);
-
-							Time timeVal(sec);
-
-							if (timeVal.miliDifference() < 3600000) {
-								ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are only permitted to create one character per hour. Repeat attempts prior to 1 hour elapsing will reset the timer.", 0x0);
-								client->sendMessage(errMsg);
-
-								playerCreature->destroyPlayerCreatureFromDatabase(true);
-								return false;
-							}
-						}
-					} catch (const DatabaseException& e) {
-						error(e.getMessage());
-					}
-#else // WITH_SWGREALMS_API
-				// Rate limiting is enforced by API during POST /characters
-				// If rate limited, API returns 429 and createCharacterBlocking fails
-				// No separate check needed
-#endif // WITH_SWGREALMS_API
-
-					Locker locker(&charCountMutex);
-
-					if (lastCreatedCharacter.containsKey(accID)) {
-						Time lastCreatedTime = lastCreatedCharacter.get(accID);
-
-						if (lastCreatedTime.miliDifference() < 3600000) {
-							ErrorMessage* errMsg = new ErrorMessage("Create Error", "You are only permitted to create one character per hour. Repeat attempts prior to 1 hour elapsing will reset the timer.", 0x0);
-							client->sendMessage(errMsg);
-
-							playerCreature->destroyPlayerCreatureFromDatabase(true);
-							return false;
-						} else {
-							lastCreatedTime.updateToCurrentTime();
-
-							lastCreatedCharacter.put(accID, lastCreatedTime);
-						}
-					} else {
-						lastCreatedCharacter.put(accID, Time());
-					}
 				}
 
 			} catch (Exception& e) {
@@ -610,8 +556,10 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	JediManager::instance()->onPlayerCreated(playerCreature);
 
-	// Welcome Mail
-	chatManager->sendMail("system", "@newbie_tutorial/newbie_mail:welcome_subject", "@newbie_tutorial/newbie_mail:welcome_body", playerCreature->getFirstName());
+	// Use server-owned text instead of the client TRE welcome message, which may
+	// contain branding inherited from an older server distribution.
+	chatManager->sendMail("SWG GOTOR", "Welcome to SWG GOTOR",
+			"Welcome to SWG GOTOR. May the Force be with you.", playerCreature->getFirstName());
 
 	// Schedule Task to send out JTL Recruitment Mail
 	SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);
@@ -622,13 +570,6 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	//Join auction chat room
 	ghost->addChatRoom(chatManager->getAuctionRoom()->getRoomID());
-
-	ManagedReference<SuiMessageBox*> box = new SuiMessageBox(playerCreature, SuiWindowType::NONE);
-	box->setPromptTitle("PLEASE NOTE");
-	box->setPromptText("You are limited to creating one character per hour. Attempting to create another character or deleting your character before the 1 hour timer expires will reset the timer.");
-
-	ghost->addSuiBox(box);
-	playerCreature->sendMessage(box->generateMessage());
 
 	return true;
 }
@@ -699,6 +640,8 @@ void PlayerCreationManager::addStartingItems(CreatureObject* creature,
 
 	for (int i = 0; i < items->size(); ++i) {
 		String itemTemplate = items->get(i);
+		if (itemTemplate.isEmpty())
+			continue;
 
 		//instance()->info("Add Starting Items: " + itemTemplate, true);
 
@@ -726,6 +669,9 @@ void PlayerCreationManager::addStartingItems(CreatureObject* creature,
 		//Add common starting items.
 		for (int itemNumber = 0; itemNumber < commonStartingItems.size();
 				itemNumber++) {
+			if (commonStartingItems.get(itemNumber).isEmpty())
+				continue;
+
 			ManagedReference<SceneObject*> item = zoneServer->createObject(
 					commonStartingItems.get(itemNumber).hashCode(), 1);
 			if (item != nullptr) {
@@ -743,10 +689,12 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 	const ProfessionDefaultsInfo* professionData = professionDefaultsInfo.get(
 			profession);
 
-	if (professionData == nullptr)
+	if (professionData == nullptr) {
 		professionData = professionDefaultsInfo.get(0);
+	}
 
 	auto startingSkill = professionData->getSkill();
+	String crafterName = creature->getFirstName();
 	//Reference<Skill*> startingSkill = SkillManager::instance()->getSkill("crafting_artisan_novice");
 
 	//Starting skill.
@@ -769,6 +717,8 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 
 	for (int i = 0; i < itemTemplates->size(); ++i) {
 		String itemTemplate = itemTemplates->get(i);
+		if (itemTemplate.isEmpty())
+			continue;
 
 		//instance()->info("Add Profession Starting Items: " + itemTemplate, true);
 
@@ -780,6 +730,15 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 		}
 
 		if (item != nullptr) {
+			if (item->isWeaponObject()) {
+				WeaponObject* weapon = cast<WeaponObject*>(item.get());
+
+				if (weapon->isJediWeapon()) {
+					weapon->setCraftersName(crafterName);
+					weapon->setCraftersID(creature->getObjectID());
+				}
+			}
+
 			String error;
 			if (creature->canAddObject(item, 4, error) == 0) {
 				creature->transferObject(item, 4, false);
@@ -806,11 +765,22 @@ void PlayerCreationManager::addProfessionStartingItems(CreatureObject* creature,
 				itemNumber++) {
 			String itemTemplate = professionData->getStartingItems()->get(
 					itemNumber);
+			if (itemTemplate.isEmpty())
+				continue;
 
 			ManagedReference<SceneObject*> item = zoneServer->createObject(
 					itemTemplate.hashCode(), 1);
 
 			if (item != nullptr) {
+				if (item->isWeaponObject()) {
+					WeaponObject* weapon = cast<WeaponObject*>(item.get());
+
+					if (weapon->isJediWeapon()) {
+						weapon->setCraftersName(crafterName);
+						weapon->setCraftersID(creature->getObjectID());
+					}
+				}
+
 				if (!inventory->transferObject(item, -1, false)) {
 					item->destroyObjectFromDatabase(true);
 				}
@@ -836,15 +806,6 @@ void PlayerCreationManager::addHair(CreatureObject* creature,
 
 	if (hairAssetData == nullptr) {
 		error("no hair asset data detected for " + hairTemplate);
-		return;
-	}
-
-	if (hairAssetData->getServerPlayerTemplate()
-			!= creature->getObjectTemplate()->getFullTemplateString()) {
-		error(
-				"hair " + hairTemplate
-						+ " is not compatible with this creature player "
-						+ creature->getObjectTemplate()->getFullTemplateString());
 		return;
 	}
 

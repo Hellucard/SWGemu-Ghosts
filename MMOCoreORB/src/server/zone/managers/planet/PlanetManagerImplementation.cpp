@@ -576,7 +576,27 @@ Reference<SceneObject*> PlanetManagerImplementation::loadSnapshotObject(WorldSna
 	String serverTemplate = templateName.replaceFirst("shared_", "");
 	Vector3 position = node->getPosition();
 
-	object = zoneServer->createClientObject(serverTemplate.hashCode(), objectID);
+	uint32 snapshotTemplateCRC = serverTemplate.hashCode();
+
+	if (!TemplateManager::instance()->existsTemplate(snapshotTemplateCRC)) {
+		StringBuffer debugMessage;
+		debugMessage
+			<< "Skipping snapshot object with missing template: zone=" << zone->getZoneName()
+			<< " template=" << templateName
+			<< " serverTemplate=" << serverTemplate
+			<< " objectID=" << objectID
+			<< " parentID=" << node->getParentID()
+			<< " nameID=" << node->getNameID()
+			<< " position=("
+			<< position.getX() << ", "
+			<< position.getZ() << ", "
+			<< position.getY() << ")";
+
+		error(debugMessage.toString());
+		return nullptr;
+	}
+
+	object = zoneServer->createClientObject(snapshotTemplateCRC, objectID);
 
 	Locker locker(object);
 

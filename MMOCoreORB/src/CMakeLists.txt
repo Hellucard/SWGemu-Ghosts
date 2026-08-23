@@ -18,6 +18,8 @@ link_directories(${CMAKE_BINARY_DIR}/src/server/chat)
 
 if(BUILD_IDL)
 	file(GLOB_RECURSE idls "${CMAKE_SOURCE_DIR}/src/*.idl")
+	set(idl_directives_stamp "${CMAKE_CURRENT_BINARY_DIR}/idl-directives.txt")
+	file(GENERATE OUTPUT "${idl_directives_stamp}" CONTENT "${IDL_DIRECTIVES}\n")
 
 	set(autogen_sources)
 
@@ -32,8 +34,9 @@ if(BUILD_IDL)
 
 		add_custom_command(OUTPUT "${autogen_cpp}" #"${autogen_h}"
 			COMMAND ${Java_JAVA_EXECUTABLE} ${IDLC_JAVA_ARGS} ${IDL_DIRECTIVES} -silence -rbcpp -sd src ${idl_f}
+			COMMAND ${CMAKE_COMMAND} -E touch "${autogen_cpp}"
 			WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-			DEPENDS ${idl}
+			DEPENDS ${idl} "${idl_directives_stamp}"
 			COMMENT "Building IDL object ${idl_b}"
 			VERBATIM)
 	endforeach()

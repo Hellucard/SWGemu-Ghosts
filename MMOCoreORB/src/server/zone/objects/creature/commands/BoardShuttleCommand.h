@@ -61,16 +61,13 @@ public:
 
 		ManagedReference<CreatureObject*> shuttle = closestPoint->getShuttle();
 
-		// Is there a shuttle object related to this point?
-		if (shuttle == nullptr) {
-			creature->error("No Shuttle Object assigned to " + closestPoint->toString());
+		// Some custom world snapshots omit the shuttle creature while retaining the
+		// configured travel point. In that case, validate against the travel point
+		// itself so tickets remain usable without weakening the route checks below.
+		bool isNearBoardingPoint = shuttle != nullptr ? shuttle->isInRange(creature, 25.f)
+				: creature->getWorldPosition().squaredDistanceTo(closestPoint->getDeparturePosition()) <= (25.f * 25.f);
 
-			// Different error so it's obvious from in-game that the shuttle did not link to this travel point.
-			creature->sendSystemMessage("Travel from this location is unavailable at this time.");
-			return GENERALERROR;
-		}
-
-		if (!shuttle->isInRange(creature, 25.f)) {
+		if (!isNearBoardingPoint) {
 			creature->sendSystemMessage("@player_structure:boarding_too_far"); //You are too far from the shuttle to board.
 			return GENERALERROR;
 		}
@@ -91,7 +88,7 @@ public:
 
 		// Is shuttle ready to board yet?
 		// Shuttle at Theed Spaceport, Naboo should always be available. Even when the shuttle isn't there.
-		if (!closestPoint->isPoint("naboo","Theed Spaceport")){
+		if (shuttle != nullptr && !closestPoint->isPoint("naboo","Theed Spaceport")){
 			if (!planetManager->checkShuttleStatus(creature, shuttle))
 				return GENERALERROR;
 		}
@@ -161,7 +158,7 @@ public:
 			}
 		}
 
-		ManagedReference<CityRegion*> departCity = shuttle->getCityRegion().get();
+		ManagedReference<CityRegion*> departCity = shuttle != nullptr ? shuttle->getCityRegion().get() : nullptr;
 
 		if (departCity != nullptr){
 			if (departCity->isBanned(creature->getObjectID())) {

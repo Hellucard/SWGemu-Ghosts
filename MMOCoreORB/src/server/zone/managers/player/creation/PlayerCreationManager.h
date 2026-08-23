@@ -74,9 +74,6 @@ class PlayerCreationManager : public Singleton<PlayerCreationManager>, public Lo
 
 	bool freeGodMode;
 
-	mutable HashTable<uint32, Time> lastCreatedCharacter;
-	mutable Mutex charCountMutex;
-
 	void loadLuaConfig();
 	void loadRacialCreationData();
 	void loadDefaultCharacterItems();

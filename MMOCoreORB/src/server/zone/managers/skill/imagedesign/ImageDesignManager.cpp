@@ -416,8 +416,16 @@ TangibleObject* ImageDesignManager::createHairObject(CreatureObject* imageDesign
 	if (imageDesigner->getSkillMod("hair") < skillMod)
 		return oldHair;
 
-	if (hairAssetData->getServerPlayerTemplate().hashCode() != targetObject->getObjectTemplate()->getFullTemplateString().hashCode()) {
-		error("hair " + hairTemplate + " is not compatible with this creature player " + targetObject->getObjectTemplate()->getFullTemplateString());
+	const String& targetTemplate =
+			targetObject->getObjectTemplate()->getFullTemplateString();
+	const bool usesSharedHumanHair =
+			targetTemplate.contains("/chiss_")
+					|| targetTemplate.contains("/nightsister_female.iff")
+					|| targetTemplate.contains("/smc_female.iff");
+
+	if (!usesSharedHumanHair && hairAssetData->getServerPlayerTemplate().hashCode()
+			!= targetTemplate.hashCode()) {
+		error("hair " + hairTemplate + " is not compatible with this creature player " + targetTemplate);
 		return oldHair;
 	}
 

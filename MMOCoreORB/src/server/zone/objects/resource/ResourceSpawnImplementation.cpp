@@ -29,6 +29,20 @@ void ResourceSpawnImplementation::addAttribute(const String& attribute, int valu
 	spawnAttributes.put(attribute, value);
 }
 
+void ResourceSpawnImplementation::clampAttributeRange(int minimum, int maximum) {
+	for (int i = 0; i < spawnAttributes.size(); ++i) {
+		String attribute = spawnAttributes.elementAt(i).getKey();
+		int value = spawnAttributes.get(i);
+
+		if (value < minimum)
+			value = minimum;
+		else if (value > maximum)
+			value = maximum;
+
+		spawnAttributes.put(attribute, value);
+	}
+}
+
 int ResourceSpawnImplementation::getAttributeAndValue(String& attribute,
 		int index) const {
 

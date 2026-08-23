@@ -125,6 +125,15 @@ public:
 		// Get stored zone name
 		String zoneName = ghost->getSavedTerrainName();
 
+		// Characters created from legacy player templates may not have received a
+		// zone component callback, leaving their saved terrain empty. Recover them
+		// into the tutorial zone instead of rejecting the login permanently.
+		if (zoneName.isEmpty()) {
+			zoneName = "tutorial";
+			ghost->setSavedTerrainName(zoneName);
+			player->info(true) << "Recovered character with empty saved terrain into tutorial -- ID: " << player->getObjectID();
+		}
+
 		auto zone = zoneServer->getZone(zoneName);
 
 #ifdef DEBUG_SELECT_CHAR_CALLBACK
