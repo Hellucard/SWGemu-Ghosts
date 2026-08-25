@@ -50,6 +50,8 @@ Luna<LuaTangibleObject>::RegType LuaTangibleObject::Register[] = {
 		{ "clearOptionBit", &LuaTangibleObject::clearOptionBit},
 		{ "hasOptionBit", &LuaTangibleObject::hasOptionBit},
 		{ "getCraftersName", &LuaTangibleObject::getCraftersName},
+		{ "setCraftersName", &LuaTangibleObject::setCraftersName},
+		{ "setCraftersID", &LuaTangibleObject::setCraftersID},
 		{ "getJunkDealerNeeded", &LuaTangibleObject::getJunkDealerNeeded},
 		{ "getJunkValue", &LuaTangibleObject::getJunkValue},
 		{ "isBroken", &LuaTangibleObject::isBroken},
@@ -378,6 +380,20 @@ int LuaTangibleObject::getCraftersName(lua_State* L) {
 	lua_pushstring(L, realObject->getCraftersName().toCharArray());
 
 	return 1;
+}
+
+int LuaTangibleObject::setCraftersName(lua_State* L) {
+	String name = lua_tostring(L, -1);
+	Locker locker(realObject);
+	realObject->setCraftersName(name);
+	return 0;
+}
+
+int LuaTangibleObject::setCraftersID(lua_State* L) {
+	uint64 objectID = lua_tointeger(L, -1);
+	Locker locker(realObject);
+	realObject->setCraftersID(objectID);
+	return 0;
 }
 
 int LuaTangibleObject::setFactionStatus(lua_State* L) {

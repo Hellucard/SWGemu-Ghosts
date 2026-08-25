@@ -3008,14 +3008,7 @@ object_tangible_terminal_terminal_character_builder = object_tangible_terminal_s
 			"Unlearn All Skills", "unlearn_all_skills",
 			"Cleanse Character", "cleanse_character",
 			"Enhance Character", "enhance_character",
-			"Jedi",
-			{
-				--"Unlock Jedi Initiate", "unlock_jedi_initiate",
-				"Unlock FRS Light Side", "frs_light_side",
-				"Unlock FRS Dark Side", "frs_dark_side"
-			},
 			"Fill Force Bar", "fill_force_bar",
-			"Drain Force Bar", "drain_force_bar",
 			"Reset Buffs", "reset_buffs",
 			"Learn Languages", "language",
 			"Credits", "credits",
@@ -3029,7 +3022,6 @@ object_tangible_terminal_terminal_character_builder = object_tangible_terminal_s
 			"Apply Fire DOT", "apply_fire_dot",
 			"Clear DOTs", "clear_dots",
 			"Max XP", "max_xp",
-			"Become Glowy", "become_glowy",
 			"Faction Points",
 			{
 				"Imperial", "faction_imperial",
@@ -3041,7 +3033,7 @@ object_tangible_terminal_terminal_character_builder = object_tangible_terminal_s
 			"Jedi Items",
 			{
 				"Color Crystal", "color_crystals",
-				"Krayt Pearl", "krayt_pearls"
+				"Padawan Robe", "object/tangible/wearables/robe/robe_jedi_padawan.iff"
 			},
 			--"Attachments",
 			--{
@@ -4074,22 +4066,6 @@ object_tangible_terminal_terminal_character_builder = object_tangible_terminal_s
 					"Camp Center (Large)","object/tangible/camp/camp_spit_s3.iff",
 				--"Stool (Short)","object/tangible/camp/camp_stool_short.iff",
 				--"Stool (Tall)","object/tangible/camp/camp_stool_tall.iff",
-				},
-				"Jedi Furniture",
-				{
-					"Dark Banner", "object/tangible/furniture/jedi/frn_all_banner_dark.iff",
-					"Light Banner", "object/tangible/furniture/jedi/frn_all_banner_light.iff",
-					"Dark Chair (Style 1)", "object/tangible/furniture/jedi/frn_all_dark_chair_s01.iff",
-					"Dark Chair (Style 2)", "object/tangible/furniture/jedi/frn_all_dark_chair_s02.iff",
-					"Dark Throne", "object/tangible/furniture/jedi/frn_all_dark_throne.iff",
-					"Light Chair (Style 1)", "object/tangible/furniture/jedi/frn_all_light_chair_s01.iff",
-					"Light Chair (Style 2)", "object/tangible/furniture/jedi/frn_all_light_chair_s02.iff",
-					"Light Throne","object/tangible/furniture/jedi/frn_all_light_throne.iff",
-					"Dark Table (Style 1)", "object/tangible/furniture/jedi/frn_all_table_dark_01.iff",
-					"Dark Table (Style 2)", "object/tangible/furniture/jedi/frn_all_table_dark_02.iff",
-					"Light Table (Style 1)", "object/tangible/furniture/jedi/frn_all_table_light_01.iff",
-					"Light Table (Style 2)", "object/tangible/furniture/jedi/frn_all_table_light_02.iff",
-					"Jedi Council Seat", "object/tangible/furniture/all/frn_all_jedi_council_seat.iff",
 				},
 				"City Decorations",
 				{

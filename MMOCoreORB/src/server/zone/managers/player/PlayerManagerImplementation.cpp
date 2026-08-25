@@ -6731,6 +6731,23 @@ void PlayerManagerImplementation::enhanceCharacter(CreatureObject* player) {
 		player->sendSystemMessage("An unknown force strengthens you for battles yet to come.");
 }
 
+void PlayerManagerImplementation::applyMedicalServiceBuff(CreatureObject* player, int duration,
+		int health, int strength, int constitution, int action, int quickness,
+		int stamina, int mind, int focus, int willpower) {
+	if (player == nullptr || duration <= 0)
+		return;
+
+	doEnhanceCharacter(0x98321369, player, health, duration, BuffType::MEDICAL, 0);
+	doEnhanceCharacter(0x815D85C5, player, strength, duration, BuffType::MEDICAL, 1);
+	doEnhanceCharacter(0x7F86D2C6, player, constitution, duration, BuffType::MEDICAL, 2);
+	doEnhanceCharacter(0x4BF616E2, player, action, duration, BuffType::MEDICAL, 3);
+	doEnhanceCharacter(0x71B5C842, player, quickness, duration, BuffType::MEDICAL, 4);
+	doEnhanceCharacter(0xED0040D9, player, stamina, duration, BuffType::MEDICAL, 5);
+	doEnhanceCharacter(0x11C1772E, player, mind, duration, BuffType::PERFORMANCE, 6);
+	doEnhanceCharacter(0x2E77F586, player, focus, duration, BuffType::PERFORMANCE, 7);
+	doEnhanceCharacter(0x3EC6FCB6, player, willpower, duration, BuffType::PERFORMANCE, 8);
+}
+
 void PlayerManagerImplementation::sendAdminJediList(CreatureObject* player) {
 	Reference<ObjectManager*> objectManager = player->getZoneServer()->getObjectManager();
 

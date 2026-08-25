@@ -144,6 +144,7 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "healDamage", &LuaCreatureObject::healDamage },
 		{ "getGroupID", &LuaCreatureObject::getGroupID },
 		{ "enhanceCharacter", &LuaCreatureObject::enhanceCharacter },
+		{ "applyMedicalServiceBuff", &LuaCreatureObject::applyMedicalServiceBuff },
 		{ "setWounds", &LuaCreatureObject::setWounds },
 		{ "setShockWounds", &LuaCreatureObject::setShockWounds },
 		{ "getForceSensitiveSkillCount", &LuaCreatureObject::getForceSensitiveSkillCount },
@@ -1079,6 +1080,25 @@ int LuaCreatureObject::getGroupID(lua_State* L) {
 int LuaCreatureObject::enhanceCharacter(lua_State* L) {
 	PlayerManager* playerManager = realObject->getZoneServer()->getPlayerManager();
 	playerManager->enhanceCharacter(realObject);
+
+	return 0;
+}
+
+int LuaCreatureObject::applyMedicalServiceBuff(lua_State* L) {
+	int duration = lua_tointeger(L, -10);
+	int health = lua_tointeger(L, -9);
+	int strength = lua_tointeger(L, -8);
+	int constitution = lua_tointeger(L, -7);
+	int action = lua_tointeger(L, -6);
+	int quickness = lua_tointeger(L, -5);
+	int stamina = lua_tointeger(L, -4);
+	int mind = lua_tointeger(L, -3);
+	int focus = lua_tointeger(L, -2);
+	int willpower = lua_tointeger(L, -1);
+
+	PlayerManager* playerManager = realObject->getZoneServer()->getPlayerManager();
+	playerManager->applyMedicalServiceBuff(realObject, duration, health, strength, constitution,
+			action, quickness, stamina, mind, focus, willpower);
 
 	return 0;
 }

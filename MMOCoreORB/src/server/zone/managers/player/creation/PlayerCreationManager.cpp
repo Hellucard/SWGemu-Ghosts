@@ -558,8 +558,35 @@ bool PlayerCreationManager::createCharacter(ClientCreateCharacterCallback* callb
 
 	// Use server-owned text instead of the client TRE welcome message, which may
 	// contain branding inherited from an older server distribution.
-	chatManager->sendMail("SWG GOTOR", "Welcome to SWG GOTOR",
-			"Welcome to SWG GOTOR. May the Force be with you.", playerCreature->getFirstName());
+	chatManager->sendMail("SWG GOTOR", "Incoming Transmission...",
+			"STAR WARS GALAXIES\n"
+			"GHOSTS OF THE OLD REPUBLIC\n\n"
+			"Incoming Transmission...\n"
+			"Clearance: Unrestricted\n"
+			"Origin: Unknown\n\n"
+			"Welcome, traveller.\n\n"
+			"The galaxy you have entered is not the one remembered in the histories.\n\n"
+			"The great wars of the Old Republic are long over. The Jedi who once stood as guardians of peace have faded into legend. The Sith endure only in whispers, forbidden teachings and relics buried beneath the ruins of forgotten worlds.\n\n"
+			"But the past is not dead.\n\n"
+			"Across the galaxy, ancient temples are being uncovered. Holocrons thought lost for centuries have begun to surface. Forgotten weapons change hands in shadowed markets, and there are rumours of individuals displaying abilities that should no longer exist.\n\n"
+			"Something is stirring.\n\n"
+			"You arrive as one among billions.\n\n"
+			"You are not a Jedi.\n"
+			"You are not a Sith.\n"
+			"You are not the chosen hero of this story.\n\n"
+			"Not yet.\n\n"
+			"Perhaps you will become a soldier, bounty hunter, smuggler or merchant.\n\n"
+			"Perhaps you will build a home, establish a business and become known throughout the settlements of the Outer Rim.\n\n"
+			"Perhaps you will explore forgotten worlds and uncover secrets that were meant to remain buried.\n\n"
+			"And perhaps, somewhere along the way, the Force will notice you.\n\n"
+			"Your reputation will be earned.\n\n"
+			"Your allies will be chosen.\n\n"
+			"Your enemies will remember you.\n\n"
+			"And the path you follow will be your own.\n\n"
+			"Welcome to Star Wars Galaxies: Ghosts of the Old Republic.\n\n"
+			"Your story begins now.\n\n"
+			"May the Force be with you... should it choose to be.",
+			playerCreature->getFirstName());
 
 	// Schedule Task to send out JTL Recruitment Mail
 	SendJtlRecruitment* jtlMailTask = new SendJtlRecruitment(playerCreature);

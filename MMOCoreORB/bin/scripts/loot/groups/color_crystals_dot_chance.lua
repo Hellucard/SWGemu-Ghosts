@@ -1,3 +1,4 @@
+-- Secondary color-crystal roll: 75% plain, 25% DOT crystal.
 color_crystals_dot_chance = {
 	description = "",
 	minimumLevel = 0,

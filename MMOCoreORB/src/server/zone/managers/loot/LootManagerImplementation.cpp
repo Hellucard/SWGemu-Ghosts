@@ -655,19 +655,26 @@ String LootManagerImplementation::getRandomLootableMod(uint32 sceneObjectType) {
 
 bool LootManagerImplementation::createLoot(TransactionLog& trx, SceneObject* container, AiAgent* creature) {
 	auto lootCollection = creature->getLootGroups();
-
-	if (lootCollection == nullptr) {
-		trx.abort() << "No lootCollection.";
-		return false;
-	}
-
-	if (lootCollection->count() == 0) {
-		trx.abort() << "Empty loot collection.";
-		trx.discard();
-		return false;
-	}
-
 	int creatureLevel = creature->getLevel();
+	bool createdLoot = false;
+
+	// Preserve each mobile's normal loot independently of the global armor rolls.
+	if (lootCollection != nullptr && lootCollection->count() > 0)
+		createdLoot = createLootFromCollection(trx, container, lootCollection, creatureLevel);
+
+	// All level 1+ NPCs and creatures have an independent 5% chance to drop
+	// a piece from the standard armor pool.
+	if (creatureLevel >= 1 && System::random(9999) < 500) {
+		if (createLoot(trx, container, "global_standard_armor", creatureLevel, false) != 0)
+			createdLoot = true;
+	}
+
+	// High-level NPCs and creatures also have an independent 1% chance to
+	// drop a piece from the custom/high-tier armor pool.
+	if (creatureLevel >= 75 && System::random(9999) < 100) {
+		if (createLoot(trx, container, "global_custom_armor", creatureLevel, false) != 0)
+			createdLoot = true;
+	}
 
 	// Low-level NPC holocron drop: levels 1-50 have a combined 1% chance
 	// to drop one holocron, split evenly between light and dark.
@@ -675,10 +682,14 @@ bool LootManagerImplementation::createLoot(TransactionLog& trx, SceneObject* con
 		const String holocronGroup =
 			System::random(1) == 0 ? "holocron_light" : "holocron_dark";
 
-		createLoot(trx, container, holocronGroup, creatureLevel, false);
+		if (createLoot(trx, container, holocronGroup, creatureLevel, false) != 0)
+			createdLoot = true;
 	}
 
-	return createLootFromCollection(trx, container, lootCollection, creatureLevel);
+	if (!createdLoot)
+		trx.abort() << "Did not win loot rolls.";
+
+	return createdLoot;
 }
 
 uint64 LootManagerImplementation::createLoot(TransactionLog& trx, SceneObject* container, ShipAiAgent* shipAgent) {
@@ -757,10 +768,6 @@ bool LootManagerImplementation::createLootFromCollection(TransactionLog& trx, Sc
 	trx.addState("lootChances", chances);
 	trx.addState("lootRolls", rolls);
 	trx.addState("lootGroups", lootGroupNames);
-
-	if (objectID == 0) {
-		trx.abort() << "Did not win loot rolls.";
-	}
 
 	return objectID > 0 ? true : false;
 }

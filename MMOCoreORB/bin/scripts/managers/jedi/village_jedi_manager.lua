@@ -26,7 +26,14 @@ function VillageJediManager:useItem(pSceneObject, itemType, pPlayer)
 
 	Logger:log("useItem called with item type " .. itemType, LT_INFO)
 	if itemType == ITEMHOLOCRON then
-		VillageJediManagerHolocron.useHolocron(pSceneObject, pPlayer)
+		-- Ghosts uses an earned holocron progression in place of the stock
+		-- Village holocron response. Fall back safely if its screenplay failed
+		-- to load so a startup problem does not make holocrons unusable.
+		if holocron_use_custom ~= nil then
+			holocron_use_custom(pPlayer, pSceneObject)
+		else
+			VillageJediManagerHolocron.useHolocron(pSceneObject, pPlayer)
+		end
 	end
 	if itemType == ITEMWAYPOINTDATAPAD then
 		SithShadowEncounter:useWaypointDatapad(pSceneObject, pPlayer)
@@ -78,6 +85,15 @@ function VillageJediManager:onPlayerLoggedIn(pPlayer)
 	end
 
 	JediTrials:onPlayerLoggedIn(pPlayer)
+
+	-- Resume any interrupted Ghosts holocron or Gatekeeper trial state.
+	if HolocronJedi ~= nil and HolocronJedi.onPlayerLoggedIn ~= nil then
+		HolocronJedi:onPlayerLoggedIn(pPlayer)
+	end
+
+	if GatekeeperConversation ~= nil and GatekeeperConversation.onPlayerLoggedIn ~= nil then
+		GatekeeperConversation:onPlayerLoggedIn(pPlayer)
+	end
 end
 
 function VillageJediManager:onPlayerLoggedOut(pPlayer)

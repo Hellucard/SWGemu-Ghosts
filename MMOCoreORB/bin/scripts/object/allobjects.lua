@@ -836,3 +836,11 @@ includeFile("weapon/ranged/objects.lua")
 includeFile("weapon/trap/objects.lua")
 includeFile("weapon/objects.lua")
 
+-- Shared definitions required by the migrated Ghosts_old server templates.
+-- These must load before serverobjects.lua instantiates their server forms.
+includeFile("draft_schematic/dance_prop/objects.lua")
+includeFile("intangible/house/objects.lua")
+includeFile("mobile/hologram/objects.lua")
+includeFile("mobile/beast_master/objects.lua")
+includeFile("tangible/component/cybernetic/objects.lua")
+includeFile("custom_content/tangible/component/weapon/lightsaber/objects.lua")

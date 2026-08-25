@@ -5,8 +5,11 @@ kimogila_common = {
 	minimumLevel = 0,
 	maximumLevel = 0,
 	lootItems = {
-		{itemTemplate = "kimogila_bone_segment", weight = 5000000},
-		{itemTemplate = "kimogila_scales", weight = 5000000}
+		{itemTemplate = "kimogila_bone_segment", weight = 2250000},
+		{itemTemplate = "kimogila_tissue", weight = 2250000},
+		{itemTemplate = "kimogila_pearl", weight = 2250000},
+		{itemTemplate = "kimogila_scales", weight = 2250000},
+		{groupTemplate = "ghosts_armor_parts", weight = 1000000}
 	}
 }
 

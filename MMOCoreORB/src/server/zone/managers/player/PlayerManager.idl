@@ -579,6 +579,14 @@ class PlayerManager extends Observer implements Logger {
 	public native void enhanceCharacter(CreatureObject player);
 
 	/**
+	 * Applies the configured Medical Services Terminal stat package through
+	 * Core3's standard medical/performance Buff implementation.
+	 */
+	public native void applyMedicalServiceBuff(CreatureObject player, int duration,
+		int health, int strength, int constitution, int action, int quickness,
+		int stamina, int mind, int focus, int willpower);
+
+	/**
 	 * Creates and adds buff to Player
 	 * @pre { player is locked }
 	 * @post { player is locked }

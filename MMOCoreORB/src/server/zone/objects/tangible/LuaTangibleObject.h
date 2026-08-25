@@ -60,6 +60,8 @@ namespace tangible {
 		int clearOptionBit(lua_State* L);
 		int hasOptionBit(lua_State* L);
 		int getCraftersName(lua_State* L);
+		int setCraftersName(lua_State* L);
+		int setCraftersID(lua_State* L);
 		int getJunkDealerNeeded(lua_State* L);
 		int getJunkValue(lua_State* L);
 		int isBroken(lua_State* L);

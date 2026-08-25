@@ -1,3 +1,4 @@
+-- Revan loot group.
 revan_loot = {
 	description = "Revan Equipment",
 	items = {

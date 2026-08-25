@@ -177,7 +177,7 @@ object_tangible_wearables_base_shared_base_backpack = SharedTangibleObjectTempla
 	collisionMaterialFlags = 1,
 	collisionMaterialPassFlags = 0,
 	containerType = 2,
-	containerVolumeLimit = 50,
+	containerVolumeLimit = 150,
 	customizationVariableMapping = {},
 
 	detailedDescription = "@wearables_detail:backpack_s01",

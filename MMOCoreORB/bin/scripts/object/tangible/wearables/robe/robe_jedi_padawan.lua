@@ -75,7 +75,9 @@ object_tangible_wearables_robe_robe_jedi_padawan = object_tangible_wearables_rob
 	noTrade = 1,
 
 	objectMenuComponent = "RobeObjectMenuComponent",
-	certificationsRequired = {"force_title_jedi_rank_02"},
+	-- Standard Jedi qualify through their Padawan title; Grey Jedi use the
+	-- separate combat_jedi tree and must also be able to wear their starter robe.
+	certificationsRequired = {"force_title_jedi_rank_02", "combat_jedi_novice"},
 	attributeListComponent = "JediRobeAttributeListComponent",
 }
 

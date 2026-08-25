@@ -1,0 +1,2 @@
+-- Jedi robe schematic objects remain disabled until their shared template
+-- definitions arrive with the schematic asset transfer.

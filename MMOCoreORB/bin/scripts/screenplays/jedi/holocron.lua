@@ -333,6 +333,32 @@ function holocron_use_for_studies(pCreature, pTarget)
     end
 end
 
+-- Single entry point used by the active Jedi manager when a player selects
+-- Use on a holocron. Before a stage threshold it consumes/studies the item;
+-- at the threshold it contacts the Gatekeeper without consuming another one.
+function holocron_use_custom(pCreature, pTarget)
+    if pCreature == nil or pTarget == nil then return end
+
+    local status = rsd(pCreature, "jedi_status")
+    local shouldContactGatekeeper = false
+
+    if status == "" or status == "none" then
+        shouldContactGatekeeper = (tonumber(rsd(pCreature, "holocrons_used")) or 0) >= 10
+    elseif status == "padawan" then
+        shouldContactGatekeeper = (tonumber(rsd(pCreature, "knight_holocrons_used")) or 0) >= 50
+    elseif status == "knight" then
+        shouldContactGatekeeper = (tonumber(rsd(pCreature, "master_holocrons_used")) or 0) >= 150
+    elseif status == "master_phase2" or status == "master" then
+        shouldContactGatekeeper = true
+    end
+
+    if shouldContactGatekeeper then
+        holocron_speak_to_gatekeeper(pCreature, pTarget)
+    else
+        holocron_use_for_studies(pCreature, pTarget)
+    end
+end
+
 function holocron_speak_to_gatekeeper(pCreature, pTarget)
     if pCreature == nil then return end
 
