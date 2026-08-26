@@ -576,6 +576,13 @@ Reference<SceneObject*> PlanetManagerImplementation::loadSnapshotObject(WorldSna
 	String serverTemplate = templateName.replaceFirst("shared_", "");
 	Vector3 position = node->getPosition();
 
+	// These destroyed Naboo structures are present in Rori's client snapshot but
+	// have no corresponding server templates in the loaded asset set. Ignore
+	// them before resolving the CRC so they do not generate startup errors.
+	if (serverTemplate.contains("object/static/worldbuilding/structures/mun_nboo_") &&
+			(serverTemplate.contains("destroyed") || serverTemplate.contains("destoyed")))
+		return nullptr;
+
 	uint32 snapshotTemplateCRC = serverTemplate.hashCode();
 
 	if (!TemplateManager::instance()->existsTemplate(snapshotTemplateCRC)) {

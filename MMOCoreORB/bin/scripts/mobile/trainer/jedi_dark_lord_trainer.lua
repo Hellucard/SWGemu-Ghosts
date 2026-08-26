@@ -1,5 +1,6 @@
 jedi_dark_lord_trainer = Creature:new {
 	objectName = "@mob/creature_names:trainer_jedi",
+	customName = "Jedi Trainer <Dark Jedi Lord>",
 	randomNameType = NAME_GENERIC,
 	randomNameTag = true,
 	planetMapCategory = "trainer_jedi",

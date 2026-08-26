@@ -281,6 +281,11 @@ includeFile("jedi/padawan/convos/padawan_the_ring_02_conv_handler.lua")
 -- because the custom Padawan grant delegates final rank setup to it.
 includeFile("jedi/gatekeeper_conversation.lua")
 includeFile("jedi/holocron.lua")
+includeFile("jedi/light_enclave_knight.lua")
+includeFile("jedi/dark_enclave_knight.lua")
+includeFile("jedi/master_trial.lua")
+includeFile("jedi/jedi_hunters.lua")
+includeFile("jedi/jedi_visibility_hunters.lua")
 
 -- Jedi Objects
 includeFile("jedi/components/ForceShrineMenuComponent.lua")

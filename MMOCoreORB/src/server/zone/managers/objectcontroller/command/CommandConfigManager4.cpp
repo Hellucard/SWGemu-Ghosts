@@ -180,12 +180,14 @@
 #include "server/zone/objects/creature/commands/InspacereloadCommand.h"
 #include "server/zone/objects/creature/commands/InspacerrCommand.h"
 #include "server/zone/objects/creature/commands/RequestSpaceTrainerCommand.h"
+#include "server/zone/objects/creature/commands/BypassTimerCommand.h"
 
 
 using namespace server::zone::managers::objectcontroller::command;
 
 
 void CommandConfigManager::registerCommands4() {
+	commandFactory.registerCommand<BypassTimerCommand>(String("bypasstimer").toLowerCase());
 	commandFactory.registerCommand<SuppressionFire1Command>(String("suppressionFire1").toLowerCase());
 	commandFactory.registerCommand<SuppressionFire2Command>(String("suppressionFire2").toLowerCase());
 	commandFactory.registerCommand<SurpriseShotCommand>(String("surpriseShot").toLowerCase());

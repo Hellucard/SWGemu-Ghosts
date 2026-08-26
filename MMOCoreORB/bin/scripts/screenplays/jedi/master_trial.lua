@@ -30,7 +30,8 @@ MasterTrial = ScreenPlay:new {
     screenPlayName = "MasterTrial",
 }
 
-registerScreenPlay("MasterTrial", true)
+-- Invoked by the Gatekeeper and trial events; it has no startup work.
+registerScreenPlay("MasterTrial", false)
 
 -- ============================================================
 -- CONSTANTS
@@ -223,6 +224,10 @@ function MasterTrial:onSeekFinalTrial(pCreature, pNPC)
     -- Gate checks
     if status ~= "knight" then
         gkSay(pCreature, "You are not yet a Knight. There is nothing for you here.")
+        return
+    end
+
+    if not holocron_progression_timer_ready(pCreature, "knight_unlocked_at", "The Grand Master or Dark Lord trials") then
         return
     end
 
@@ -695,6 +700,7 @@ function MasterTrial:doGrantNoviceMaster(pCreature, alignment)
     wsd(pCreature, "jedi_status", "master_novice")
     wsd(pCreature, "master_trial_phase1_done", "1")
     wsd(pCreature, "master_trial_notified", "0")  -- reset so phase 2 notification can fire
+    wsd(pCreature, "master_novice_unlocked_at", os.time())
 
     if alignment == "dark" then
         awardSkill(pCreature, "jedi_dark_lord_novice", true)
@@ -719,6 +725,7 @@ function MasterTrial:sendPhaseOneCompleteMail(pCreature, alignment)
             firstName .. ",\n\n" ..
             "You destroyed the clone. The dark side has taken note.\n\n" ..
             "You now hold the rank of Dark Lord Novice. But a novice is still a beginning.\n\n" ..
+            "You must complete a final seven-day training period before you may undertake the trial for the Dark Jedi Lord Master box.\n\n" ..
             "Seek the Dark Enclave on Yavin 4 at coordinates: 5079, 306.\n" ..
             "The terminal within will allow you to train the intermediate Dark Lord disciplines.\n\n" ..
             "Train every box. Leave nothing unlearned. When you stand at the threshold of the final rank...\n\n" ..
@@ -734,6 +741,7 @@ function MasterTrial:sendPhaseOneCompleteMail(pCreature, alignment)
             firstName .. ",\n\n" ..
             "You stood before the clone and did not fall. The Force is pleased.\n\n" ..
             "You now hold the rank of Grand Master Novice. The path continues.\n\n" ..
+            "You must complete a final seven-day training period before you may undertake the trial for the Grand Jedi Master box.\n\n" ..
             "Seek the Jedi Enclave on Yavin 4 at coordinates: -5575, 4910.\n" ..
             "The terminal within will allow you to train the intermediate Grand Master disciplines.\n\n" ..
             "Train every box. Leave no teaching unstudied. When you stand at the threshold of the final rank...\n\n" ..
@@ -759,6 +767,10 @@ function MasterTrial:onSeekFinalConfrontation(pCreature, pNPC)
 
     if phase1Done ~= "1" then
         gkSay(pCreature, "You have not yet completed the first trial. Speak to me about the final trial first.")
+        return
+    end
+
+    if not holocron_progression_timer_ready(pCreature, "master_novice_unlocked_at", "The final Grand Master or Dark Lord trial") then
         return
     end
 

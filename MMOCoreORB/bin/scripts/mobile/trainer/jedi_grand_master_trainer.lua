@@ -1,5 +1,6 @@
 jedi_grand_master_trainer = Creature:new {
 	objectName = "@mob/creature_names:trainer_jedi",
+	customName = "Jedi Trainer <Grand Jedi Master>",
 	randomNameType = NAME_GENERIC,
 	randomNameTag = true,
 	planetMapCategory = "trainer_jedi",

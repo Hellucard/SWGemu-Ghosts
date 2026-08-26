@@ -21,7 +21,8 @@ GatekeeperConversation = ScreenPlay:new {
     screenPlayName = "GatekeeperConversation",
 }
 
-registerScreenPlay("GatekeeperConversation", true)
+-- Event-driven conversation logic; it has no startup work.
+registerScreenPlay("GatekeeperConversation", false)
 
 -- ============================================================
 -- HELPERS

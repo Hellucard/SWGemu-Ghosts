@@ -31,6 +31,75 @@ local function sendForceMessage(pCreature, msg)
 end
 
 local POINTS_PER_HOLOCRON = 1000
+local JEDI_STAGE_DELAY_SECONDS = 7 * 24 * 60 * 60
+
+function holocron_progression_timer_ready(pCreature, timestampKey, stageName)
+    if pCreature == nil then return false end
+
+    if rsd(pCreature, "progression_timer_bypass_pending") == "1" then
+        -- A bypass authorizes exactly one progression gate. Consume it here
+        -- so an administrator must explicitly authorize every later stage.
+        wsd(pCreature, "progression_timer_bypass_pending", "0")
+        sendForceMessage(pCreature, "The administrator timer bypass has been consumed for this progression stage.")
+        return true
+    end
+
+    local unlockedAt = tonumber(rsd(pCreature, timestampKey)) or 0
+    if unlockedAt <= 0 then
+        -- Existing characters predate the timer data. Start their seven-day
+        -- clock the first time they attempt the next progression stage.
+        unlockedAt = os.time()
+        wsd(pCreature, timestampKey, unlockedAt)
+    end
+
+    local remaining = JEDI_STAGE_DELAY_SECONDS - (os.time() - unlockedAt)
+    if remaining <= 0 then return true end
+
+    local days = math.floor(remaining / 86400)
+    local hours = math.ceil((remaining % 86400) / 3600)
+    if hours == 24 then
+        days = days + 1
+        hours = 0
+    end
+
+    sendForceMessage(pCreature, stageName .. " is not yet available. You must wait " ..
+        days .. " day(s) and " .. hours .. " hour(s), or use /bypasstimer.")
+    return false
+end
+
+-- Shows the remaining training time without consuming an administrator
+-- bypass. Returns true while the player must continue waiting.
+function holocron_progression_training_notice(pCreature, timestampKey, stageName)
+    if pCreature == nil then return false end
+
+    if rsd(pCreature, "progression_timer_bypass_pending") == "1" then
+        sendForceMessage(pCreature, "An administrator has authorized your next timed progression stage. Speak to the Gatekeeper when your studies are complete.")
+        return false
+    end
+
+    local unlockedAt = tonumber(rsd(pCreature, timestampKey)) or 0
+    if unlockedAt <= 0 then
+        unlockedAt = os.time()
+        wsd(pCreature, timestampKey, unlockedAt)
+    end
+
+    local remaining = JEDI_STAGE_DELAY_SECONDS - (os.time() - unlockedAt)
+    if remaining <= 0 then
+        sendForceMessage(pCreature, "Your seven-day training period for " .. stageName .. " is complete. Speak to the Gatekeeper when your studies are complete.")
+        return false
+    end
+
+    local days = math.floor(remaining / 86400)
+    local hours = math.ceil((remaining % 86400) / 3600)
+    if hours == 24 then
+        days = days + 1
+        hours = 0
+    end
+
+    sendForceMessage(pCreature, "You may continue studying holocrons, but you cannot begin " .. stageName ..
+        " for another " .. days .. " day(s) and " .. hours .. " hour(s).")
+    return true
+end
 
 function holocron_award_points(pCreature, points, source)
     if pCreature == nil or points == nil or points <= 0 then return end
@@ -58,7 +127,19 @@ HolocronJedi = ScreenPlay:new {
     numberOfActs = 1,
 }
 
-registerScreenPlay("HolocronJedi", true)
+-- Invoked by holocron observers/radials; it has no startup work.
+registerScreenPlay("HolocronJedi", false)
+
+function HolocronJedi:bypassProgressionTimers(pCreature)
+    if pCreature == nil then return end
+    if rsd(pCreature, "progression_timer_bypass_pending") == "1" then
+        sendForceMessage(pCreature, "This character already has one pending timer bypass. It cannot be stacked.")
+        return
+    end
+
+    wsd(pCreature, "progression_timer_bypass_pending", "1")
+    sendForceMessage(pCreature, "One Jedi progression waiting period may now be bypassed. This authorization is consumed at the next timed stage.")
+end
 
 -- ============================================================
 -- FIRST HOLOCRON PICKUP — One-time lore SUI
@@ -341,18 +422,27 @@ function holocron_use_custom(pCreature, pTarget)
 
     local status = rsd(pCreature, "jedi_status")
     local shouldContactGatekeeper = false
+    local trainingPeriodActive = false
 
     if status == "" or status == "none" then
         shouldContactGatekeeper = (tonumber(rsd(pCreature, "holocrons_used")) or 0) >= 10
     elseif status == "padawan" then
+        trainingPeriodActive = holocron_progression_training_notice(
+            pCreature, "padawan_unlocked_at", "the Jedi Knight Trials")
         shouldContactGatekeeper = (tonumber(rsd(pCreature, "knight_holocrons_used")) or 0) >= 50
     elseif status == "knight" then
+        trainingPeriodActive = holocron_progression_training_notice(
+            pCreature, "knight_unlocked_at", "the Grand Jedi Master or Dark Jedi Lord trials")
         shouldContactGatekeeper = (tonumber(rsd(pCreature, "master_holocrons_used")) or 0) >= 150
-    elseif status == "master_phase2" or status == "master" then
+    elseif status == "master_novice" or status == "master_phase2" then
+        trainingPeriodActive = holocron_progression_training_notice(
+            pCreature, "master_novice_unlocked_at", "the final Grand Jedi Master or Dark Jedi Lord trial")
+        shouldContactGatekeeper = (status == "master_phase2")
+    elseif status == "master" then
         shouldContactGatekeeper = true
     end
 
-    if shouldContactGatekeeper then
+    if shouldContactGatekeeper and not trainingPeriodActive then
         holocron_speak_to_gatekeeper(pCreature, pTarget)
     else
         holocron_use_for_studies(pCreature, pTarget)
@@ -564,6 +654,10 @@ function holocron_begin_knight_trial(pCreature, pTarget)
 
     if knightUsed < 50 then
         CreatureObject(pCreature):sendSystemMessage("\\#888888 You have studied " .. knightUsed .. "/50 holocrons. " .. (50 - knightUsed) .. " more are required before you may attempt the trial.")
+        return
+    end
+
+    if not holocron_progression_timer_ready(pCreature, "padawan_unlocked_at", "The Knight trials") then
         return
     end
 
@@ -804,6 +898,7 @@ function holocron_grant_padawan(pCreature)
 
     -- Set our custom progression state.
     wsd(pCreature, "jedi_status", "padawan")
+    wsd(pCreature, "padawan_unlocked_at", os.time())
 
     PlayerObject(pGhost):setJediState(1)
 
@@ -821,6 +916,18 @@ function holocron_grant_padawan(pCreature)
     CreatureObject(pCreature):sendSystemMessage(
         "\\#AADDFF[Jedi System] \\#FFFFFFYour connection to the Force has awakened. You are now a Jedi Padawan."
     )
+
+    local firstName = CreatureObject(pCreature):getFirstName()
+    sendMail(
+        "The Force",
+        "Jedi Progression - The Padawan Path",
+        firstName .. ",\n\n" ..
+        "The path of the Jedi cannot be rushed.\n\n" ..
+        "You have become a Jedi Padawan. You must now complete seven days of training before you may undertake your Jedi Knight Trials.\n\n" ..
+        "This waiting period represents the time required for you to grow, train, and deepen your connection to the Force.\n\n" ..
+        "May the Force guide your path.",
+        firstName
+    )
 end
 
 function holocron_grant_knight(pCreature, alignment)
@@ -833,6 +940,7 @@ function holocron_grant_knight(pCreature, alignment)
 
     wsd(pCreature, "jedi_status", "knight")
     wsd(pCreature, "jedi_alignment", alignment)
+    wsd(pCreature, "knight_unlocked_at", os.time())
 
     local councilType = (alignment == "dark") and 2 or 1
     writeScreenPlayData(pCreature, "JediTrials", "JediCouncil", tostring(councilType))
@@ -887,6 +995,19 @@ function holocron_grant_knight(pCreature, alignment)
             "\\#88CCFF[Jedi System] \\#FFFFFFYou have been recognized as a Jedi Knight."
         )
     end
+
+    local firstName = CreatureObject(pCreature):getFirstName()
+    local nextRank = (alignment == "dark") and "Dark Jedi Lord" or "Grand Jedi Master"
+    sendMail(
+        "The Force",
+        "Jedi Progression - The Knight's Path",
+        firstName .. ",\n\n" ..
+        "The path of the Jedi cannot be rushed.\n\n" ..
+        "You have become a Jedi Knight. You must now complete a further seven days of training before you may undertake the trials to become " .. nextRank .. ".\n\n" ..
+        "Use this time to train, grow, and master your connection to the Force.\n\n" ..
+        "May the Force guide your path.",
+        firstName
+    )
 end
 
 -- ============================================================
@@ -895,6 +1016,10 @@ end
 
 function holocron_begin_master_trial(pCreature, pTarget)
     if pCreature == nil then return end
+
+    if not holocron_progression_timer_ready(pCreature, "knight_unlocked_at", "The Grand Master or Dark Lord trials") then
+        return
+    end
 
     local alignment = rsd(pCreature, "jedi_alignment")
     local name = CreatureObject(pCreature):getFirstName()
@@ -961,6 +1086,10 @@ end
 
 function holocron_begin_master_trial_final(pCreature, pTarget)
     if pCreature == nil then return end
+
+    if not holocron_progression_timer_ready(pCreature, "master_novice_unlocked_at", "The final Grand Master or Dark Lord trial") then
+        return
+    end
 
     local alignment = rsd(pCreature, "jedi_alignment")
     local name = CreatureObject(pCreature):getFirstName()
