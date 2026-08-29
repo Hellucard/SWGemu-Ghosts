@@ -6748,6 +6748,29 @@ void PlayerManagerImplementation::applyMedicalServiceBuff(CreatureObject* player
 	doEnhanceCharacter(0x3EC6FCB6, player, willpower, duration, BuffType::PERFORMANCE, 8);
 }
 
+bool PlayerManagerImplementation::applyMedicalDroidEnhancement(CreatureObject* player, int duration, int amount) {
+	if (player == nullptr || !player->isPlayerCreature() || duration <= 0 || amount <= 0)
+		return false;
+
+	const uint32 buffCRC = STRING_HASHCODE("medical_droid_enhancement");
+
+	// This enhancement owns only its dedicated CRC. Reusing it refreshes the
+	// package without removing or modifying unrelated Doctor/Entertainer buffs.
+	if (player->hasBuff(buffCRC))
+		player->removeBuff(buffCRC);
+
+	ManagedReference<Buff*> buff = new Buff(player, buffCRC, duration, BuffType::MEDICAL);
+	Locker locker(buff);
+
+	for (uint8 attribute = CreatureAttribute::HEALTH; attribute <= CreatureAttribute::WILLPOWER; ++attribute)
+		buff->setAttributeModifier(attribute, amount);
+
+	buff->setFillAttributesOnBuff(true);
+	player->addBuff(buff);
+
+	return player->hasBuff(buffCRC);
+}
+
 void PlayerManagerImplementation::sendAdminJediList(CreatureObject* player) {
 	Reference<ObjectManager*> objectManager = player->getZoneServer()->getObjectManager();
 

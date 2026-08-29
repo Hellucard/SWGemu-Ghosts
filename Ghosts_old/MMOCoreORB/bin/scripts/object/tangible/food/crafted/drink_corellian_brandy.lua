@@ -44,22 +44,22 @@
 object_tangible_food_crafted_drink_corellian_brandy = object_tangible_food_crafted_shared_drink_corellian_brandy:new {
 	templateType = CONSUMABLE,
 
-	duration = 10,
+	duration = 28800,
 	filling = 10,
 	nutrition = 10,
 
 	effectType = 4,
 
 	fillingMin = 17,
-	fillingMax = 10,
-	flavorMin = 720,
-	flavorMax = 1440,
-	nutritionMin = 7,
-	nutritionMax = 12,
-	quantityMin = 6,
-	quantityMax = 10,
+	fillingMax = 60,
+	flavorMin = 7200,
+	flavorMax = 14400,
+	nutritionMin = 7000,
+	nutritionMax = 12000,
+	quantityMin = 60,
+	quantityMax = 150,
 
-	modifiers = { "knockdown_defense", 0 },
+	modifiers = {  "mind", 0 , "focus", 0 , "willpower", 0,"constitution", 0, "stamina", 0, "strength", 0 ,"action", 0 , "quckness", 0 , "health", 0 },
 
 	buffName = "food.drink_corellian_brandy",
 	buffCRC = 0,

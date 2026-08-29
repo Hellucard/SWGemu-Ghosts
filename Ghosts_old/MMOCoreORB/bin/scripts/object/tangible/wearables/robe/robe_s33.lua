@@ -230,8 +230,8 @@ object_tangible_wearables_robe_robe_s33 = object_tangible_wearables_robe_shared_
 	experimentalWeights = {1, 1, 1, 1},
 	experimentalGroupTitles = {"null", "null", "null", "null"},
 	experimentalSubGroupTitles = {"null", "null", "sockets", "hitpoints"},
-	experimentalMin = {0, 0, 0, 1000},
-	experimentalMax = {0, 0, 0, 1000},
+	experimentalMin = {0, 0, 4, 1000},
+	experimentalMax = {0, 0, 4, 1000},
 	experimentalPrecision = {0, 0, 0, 0},
 	experimentalCombineType = {0, 0, 4, 4},
 }

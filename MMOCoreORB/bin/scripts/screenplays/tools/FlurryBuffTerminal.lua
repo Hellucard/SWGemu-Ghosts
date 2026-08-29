@@ -70,7 +70,10 @@ FlurryBuffTerminal = ScreenPlay:new {
 	}
 }
 
-registerScreenPlay("FlurryBuffTerminal", true)
+-- Keep the legacy implementation available for reference, but never
+-- auto-start it.  Normal travel terminals must not be replaced or decorated
+-- by this screenplay.
+registerScreenPlay("FlurryBuffTerminal", false)
 
 function FlurryBuffTerminal:start()
 	-- Spawn terminals

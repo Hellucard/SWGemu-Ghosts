@@ -6,8 +6,8 @@
     What this keeps:
       - 10 holocrons required for Padawan
       - False Sith / Gatekeeper trial
-      - 50 holocrons for Knight
-      - 100 holocrons for Master
+      - 50 Padawan-stage holocron studies for Knight
+      - 150 Knight-stage holocron studies for Master-Novice eligibility
 
     What this changes:
       - Padawan completion now calls the stock SWGEmu JediTrials unlock path
@@ -32,6 +32,164 @@ end
 
 local POINTS_PER_HOLOCRON = 1000
 local JEDI_STAGE_DELAY_SECONDS = 7 * 24 * 60 * 60
+local JEDI_DISCOVERY_SKILL_BOXES = 36
+local JEDI_DISCOVERY_HOLOCRON = "object/tangible/jedi/no_drop_jedi_holocron_light.iff"
+local DISCOVERY_RECEIVED = "received"
+local DISCOVERY_ACTIVATED = "activated"
+local DISCOVERY_UNLOCKED = "studies_unlocked"
+local PADAWAN_STUDIES_NEEDED = 10
+local KNIGHT_STUDIES_NEEDED = 50
+local MASTER_STUDIES_NEEDED = 150
+
+-- Each rank has its own counter.  The one-time migration converts saves made
+-- by the short-lived cumulative implementation without making players repeat
+-- studies already completed during their current rank.
+local function getTotalStudies(pCreature)
+    local status = rsd(pCreature, "jedi_status")
+    if rsd(pCreature, "stage_counter_migrated") ~= "1" then
+        local cumulative = tonumber(rsd(pCreature, "holocron_studies_total"))
+        if cumulative ~= nil then
+            if status == "padawan" then
+                wsd(pCreature, "knight_holocrons_used", math.max(0, cumulative - PADAWAN_STUDIES_NEEDED))
+            elseif status == "knight" then
+                wsd(pCreature, "master_holocrons_used", math.max(0, cumulative - KNIGHT_STUDIES_NEEDED))
+            end
+        end
+        wsd(pCreature, "stage_counter_migrated", "1")
+        wsd(pCreature, "holocron_studies_total", "")
+    end
+
+    if status == "padawan" then
+        return tonumber(rsd(pCreature, "knight_holocrons_used")) or 0
+    elseif status == "knight" then
+        return tonumber(rsd(pCreature, "master_holocrons_used")) or 0
+    end
+    return tonumber(rsd(pCreature, "holocrons_used")) or 0
+end
+
+local function setTotalStudies(pCreature, total)
+    total = math.max(0, tonumber(total) or 0)
+    local status = rsd(pCreature, "jedi_status")
+    if status == "padawan" then
+        wsd(pCreature, "knight_holocrons_used", total)
+    elseif status == "knight" then
+        wsd(pCreature, "master_holocrons_used", total)
+    else
+        wsd(pCreature, "holocrons_used", total)
+    end
+end
+
+local function ensureForceSensitiveSchematics(pCreature)
+    local pGhost = CreatureObject(pCreature):getPlayerObject()
+    if pGhost == nil then return end
+
+    -- These are the two schematics granted by the Force-sensitive stage.
+    -- Padawan must not receive any Generation One lightsaber schematics.
+    PlayerObject(pGhost):addRewardedSchematic(
+        "object/draft_schematic/weapon/lightsaber/lightsaber_training.iff", 2, -1, true)
+    PlayerObject(pGhost):addRewardedSchematic(
+        "object/draft_schematic/weapon/lightsaber/lightsaber_refined_crystal_pack.iff", 2, -1, true)
+end
+
+local function replaceEnclaveWaypoint(pCreature, alignment)
+    local pGhost = CreatureObject(pCreature):getPlayerObject()
+    if pGhost == nil then return end
+    local oldID = tonumber(rsd(pCreature, "jedi_enclave_waypoint_id")) or 0
+    if oldID > 0 then PlayerObject(pGhost):removeWaypoint(oldID, true) end
+    local dark = alignment == "dark"
+    local wpID = PlayerObject(pGhost):addWaypoint("yavin4",
+        dark and "Dark Jedi Enclave" or "Light Jedi Enclave", "",
+        dark and 5079 or -5575, 0, dark and 306 or 4910,
+        WAYPOINTYELLOW, true, true, WAYPOINTQUESTTASK)
+    wsd(pCreature, "jedi_enclave_waypoint_id", wpID or 0)
+end
+
+local function formatTrainingTime(remaining)
+    remaining = math.max(0, math.ceil(tonumber(remaining) or 0))
+
+    local days = math.floor(remaining / 86400)
+    remaining = remaining % 86400
+    local hours = math.floor(remaining / 3600)
+    remaining = remaining % 3600
+    local minutes = math.ceil(remaining / 60)
+
+    if minutes == 60 then
+        minutes = 0
+        hours = hours + 1
+    end
+    if hours == 24 then
+        hours = 0
+        days = days + 1
+    end
+
+    return days .. " day(s), " .. hours .. " hour(s), and " .. minutes .. " minute(s)"
+end
+
+local function inventoryContainsTemplate(pCreature, templatePath)
+    local pInventory = CreatureObject(pCreature):getSlottedObject("inventory")
+    if pInventory == nil then return false end
+
+    local count = SceneObject(pInventory):getContainerObjectsSize()
+    for i = 0, count - 1 do
+        local pItem = SceneObject(pInventory):getContainerObject(i)
+        if pItem ~= nil and SceneObject(pItem):getTemplateObjectPath() == templatePath then
+            return true
+        end
+    end
+    return false
+end
+
+local function hasAnySkill(pCreature, skills)
+    for _, skillName in ipairs(skills) do
+        if CreatureObject(pCreature):hasSkill(skillName) then return true end
+    end
+    return false
+end
+
+local function getDiscoveryProfession(pCreature)
+    -- The order is intentional and makes hybrid characters deterministic.
+    if hasAnySkill(pCreature, {
+        "combat_medic_novice", "science_doctor_novice", "science_combatmedic_novice"
+    }) then return "medic" end
+
+    if hasAnySkill(pCreature, {
+        "social_entertainer_novice", "social_dancer_novice", "social_musician_novice",
+        "social_imagedesigner_novice"
+    }) then return "entertainer" end
+
+    if hasAnySkill(pCreature, {
+        "crafting_artisan_novice", "crafting_weaponsmith_novice", "crafting_armorsmith_novice",
+        "crafting_droidengineer_novice", "crafting_architect_novice", "crafting_chef_novice",
+        "crafting_tailor_novice", "crafting_shipwright_novice"
+    }) then return "artisan" end
+
+    if hasAnySkill(pCreature, {
+        "outdoors_scout_novice", "outdoors_ranger_novice", "outdoors_creaturehandler_novice"
+    }) then return "scout" end
+
+    return "combat"
+end
+
+
+local function showDiscoveryPopup(pPlayer)
+    if pPlayer == nil then return end
+
+    local category = getDiscoveryProfession(pPlayer)
+    local messages = {
+        entertainer = "You finish your performance and begin gathering your things when something unusual catches your eye among the evening's tips.\n\nIt isn't a credit chip.\n\nA small, unfamiliar object rests among your belongings, its surface strangely smooth and cold beneath your fingers.\n\nYou cannot remember seeing anyone leave it there.\n\nFor the briefest moment, you could swear something moved within it... a faint pulse of light that disappears almost as soon as you notice it.\n\nSomeone tipped you something far stranger than credits.",
+        artisan = "While sorting through your materials, you notice something that doesn't belong.\n\nAt first you mistake it for an unusual piece of raw material, but the object is unlike anything recorded by your tools.\n\nIts surface is impossibly smooth, yet your instruments cannot identify its composition.\n\nWhen you pick it up, a faint light flickers somewhere deep inside.\n\nYou don't remember gathering it.\n\nWhatever it is, this is no ordinary resource.",
+        medic = "While reorganising your medical supplies, your hand brushes against something that should not be there.\n\nHidden beneath the familiar instruments and medicine packs is a small object you have never seen before.\n\nIt is cool to the touch and bears markings you don't recognise.\n\nFor a moment, a faint light stirs beneath its surface.\n\nYou have no memory of placing it in your medical bag.\n\nWhatever this object is, it certainly isn't medical equipment.",
+        scout = "While checking your equipment after another journey through the wilderness, you notice something caught among your gathered supplies.\n\nAt first you assume it is a stone or fragment collected while harvesting.\n\nIt isn't.\n\nThe small object is unnaturally smooth, untouched by dirt or weather, and marked with patterns you have never seen before.\n\nAs you brush the dust away, a faint light moves beneath its surface.\n\nFor all your experience tracking the things others overlook, you cannot explain where this came from.\n\nPerhaps this time, something was waiting to be found.",
+        combat = "After the fighting is over, you begin checking your equipment and sorting through what was recovered from the battlefield.\n\nAmong the debris is something you don't recognise.\n\nA small object rests in your hand, untouched by the violence around it.\n\nThere are no maker's marks. No obvious controls. Nothing to suggest what purpose it serves.\n\nThen, for just an instant, light flickers from somewhere within.\n\nYou don't remember picking it up.\n\nYet somehow, it feels as though you were meant to find it."
+    }
+
+    local sui = SuiMessageBox.new("HolocronJedi", "emptyCallback")
+    sui.setTitle("A Strange Discovery")
+    sui.setPrompt(messages[category])
+    sui.setOkButtonText("Examine it later")
+    sui.setCancelButtonText("Close")
+    sui.sendTo(pPlayer)
+end
 
 function holocron_progression_timer_ready(pCreature, timestampKey, stageName)
     if pCreature == nil then return false end
@@ -55,15 +213,8 @@ function holocron_progression_timer_ready(pCreature, timestampKey, stageName)
     local remaining = JEDI_STAGE_DELAY_SECONDS - (os.time() - unlockedAt)
     if remaining <= 0 then return true end
 
-    local days = math.floor(remaining / 86400)
-    local hours = math.ceil((remaining % 86400) / 3600)
-    if hours == 24 then
-        days = days + 1
-        hours = 0
-    end
-
     sendForceMessage(pCreature, stageName .. " is not yet available. You must wait " ..
-        days .. " day(s) and " .. hours .. " hour(s), or use /bypasstimer.")
+        formatTrainingTime(remaining) .. ".")
     return false
 end
 
@@ -89,15 +240,8 @@ function holocron_progression_training_notice(pCreature, timestampKey, stageName
         return false
     end
 
-    local days = math.floor(remaining / 86400)
-    local hours = math.ceil((remaining % 86400) / 3600)
-    if hours == 24 then
-        days = days + 1
-        hours = 0
-    end
-
     sendForceMessage(pCreature, "You may continue studying holocrons, but you cannot begin " .. stageName ..
-        " for another " .. days .. " day(s) and " .. hours .. " hour(s).")
+        " for another " .. formatTrainingTime(remaining) .. ".")
     return true
 end
 
@@ -129,6 +273,145 @@ HolocronJedi = ScreenPlay:new {
 
 -- Invoked by holocron observers/radials; it has no startup work.
 registerScreenPlay("HolocronJedi", false)
+
+function HolocronJedi:showDiscoveryPopup(pPlayer, params)
+    if pPlayer == nil then return end
+    -- Skill acquisition can fire several eligibility callbacks in the same
+    -- frame. Only the first queued event may create a discovery window.
+    if rsd(pPlayer, "jedi_discovery_popup_shown") == "1" then return end
+    wsd(pPlayer, "jedi_discovery_popup_scheduled", "0")
+    wsd(pPlayer, "jedi_discovery_popup_shown", "1")
+    showDiscoveryPopup(pPlayer)
+end
+
+function HolocronJedi:onSkillLearned(pPlayer, skillName)
+    self:checkDiscoveryEligibility(pPlayer)
+end
+
+function HolocronJedi:checkDiscoveryEligibility(pPlayer)
+    if pPlayer == nil then return end
+    if rsd(pPlayer, "jedi_holocron_studies_unlocked") == "1" then
+        wsd(pPlayer, "jedi_discovery_state", DISCOVERY_UNLOCKED)
+        return
+    end
+
+    local state = rsd(pPlayer, "jedi_discovery_state")
+    if state == DISCOVERY_ACTIVATED then
+        -- The item has already been consumed. Recreate only the encounter.
+        createEvent(1000, "HolocronJedi", "beginDiscoveryEncounter", pPlayer, "")
+        return
+    end
+
+    if state == DISCOVERY_RECEIVED or rsd(pPlayer, "jedi_holocron_discovery_occurred") == "1" then
+        -- Compatibility for characters awarded by the earlier implementation.
+        wsd(pPlayer, "jedi_discovery_state", DISCOVERY_RECEIVED)
+        if inventoryContainsTemplate(pPlayer, JEDI_DISCOVERY_HOLOCRON) then
+            if rsd(pPlayer, "jedi_discovery_popup_shown") ~= "1" and
+                    rsd(pPlayer, "jedi_discovery_popup_scheduled") ~= "1" then
+                -- Persist the scheduling guard before creating the delayed
+                -- event so simultaneous skill callbacks cannot queue copies.
+                wsd(pPlayer, "jedi_discovery_popup_scheduled", "1")
+                createEvent(250, "HolocronJedi", "showDiscoveryPopup", pPlayer, "")
+            end
+            return
+        end
+        -- Restore a missing unactivated personal item, but never award a
+        -- second copy while one exists.
+    end
+
+    local learned = CreatureObject(pPlayer):getLearnedProfessionSkillBoxCount()
+    if learned < JEDI_DISCOVERY_SKILL_BOXES then return end
+
+    local pInventory = CreatureObject(pPlayer):getSlottedObject("inventory")
+    if pInventory == nil or SceneObject(pInventory):isContainerFullRecursive() then
+        sendForceMessage(pPlayer, "You sense that something is trying to reach you, but your inventory is full.")
+        return
+    end
+
+    local pHolocron = nil
+    if not inventoryContainsTemplate(pPlayer, JEDI_DISCOVERY_HOLOCRON) then
+        pHolocron = giveItem(pInventory, JEDI_DISCOVERY_HOLOCRON, -1, true)
+        if pHolocron == nil then
+            sendForceMessage(pPlayer, "A strange presence brushes your thoughts. Make room in your inventory and log in again.")
+            return
+        end
+    end
+
+    wsd(pPlayer, "jedi_holocron_discovery_occurred", "1")
+    wsd(pPlayer, "jedi_discovery_state", DISCOVERY_RECEIVED)
+    if rsd(pPlayer, "jedi_discovery_popup_shown") ~= "1" and
+            rsd(pPlayer, "jedi_discovery_popup_scheduled") ~= "1" then
+        wsd(pPlayer, "jedi_discovery_popup_scheduled", "1")
+        createEvent(250, "HolocronJedi", "showDiscoveryPopup", pPlayer, "")
+    end
+end
+
+function HolocronJedi:beginDiscoveryEncounter(pPlayer, params)
+    if pPlayer == nil or rsd(pPlayer, "jedi_holocron_studies_unlocked") == "1" then return end
+    if rsd(pPlayer, "jedi_discovery_state") ~= DISCOVERY_ACTIVATED then return end
+
+    local existingID = tonumber(rsd(pPlayer, "discovery_npc_id")) or 0
+    local pExisting = existingID > 0 and getSceneObject(existingID) or nil
+    if pExisting ~= nil and SceneObject(pExisting):getCustomObjectName() == "A Wandering Scholar" and
+            SceneObject(pExisting):getZoneName() == SceneObject(pPlayer):getZoneName() and
+            SceneObject(pPlayer):isInRangeWithObject(pExisting, 30) then
+        spatialChat(pExisting, "You still have questions. Speak with me when you are ready.")
+        return
+    end
+
+    if pExisting ~= nil then
+        SceneObject(pExisting):destroyObjectFromWorld()
+        SceneObject(pExisting):destroyObjectFromDatabase(true)
+    end
+
+    -- Runtime scene IDs can become stale after a restart.  Never let an old
+    -- saved ID prevent the encounter from being created again.
+    wsd(pPlayer, "discovery_npc_id", "0")
+
+    local zone = SceneObject(pPlayer):getZoneName()
+    if zone == nil or zone == "" then return end
+
+    local cellID = CreatureObject(pPlayer):getParentID()
+    local x
+    local y
+    local z
+
+    if cellID ~= 0 then
+        -- spawnMobile uses cell-local coordinates for an indoor spawn.
+        x = SceneObject(pPlayer):getPositionX() + 2
+        y = SceneObject(pPlayer):getPositionY() + 1
+        z = SceneObject(pPlayer):getPositionZ()
+    else
+        x = SceneObject(pPlayer):getWorldPositionX() + 3
+        y = SceneObject(pPlayer):getWorldPositionY() + 2
+        z = getWorldFloor(x, y, zone)
+    end
+
+    local pNpc = spawnMobile(zone, "holocron_discovery_scholar", 0, x, z, y, 180, cellID)
+    if pNpc == nil then
+        sendForceMessage(pPlayer, "The presence fades before revealing itself. Log out and return to resume the encounter.")
+        return
+    end
+
+    SceneObject(pNpc):setCustomObjectName("A Wandering Scholar")
+	CreatureObject(pNpc):setPvpStatusBitmask(0)
+	CreatureObject(pNpc):clearOptionBit(AIENABLED)
+	AiAgent(pNpc):addObjectFlag(AI_STATIC)
+    wsd(pPlayer, "discovery_npc_id", SceneObject(pNpc):getObjectID())
+    spatialChat(pNpc, "You there. Yes, you. That object you're carrying... where did you find it?")
+    createEvent(300000, "HolocronJedi", "despawnDiscoveryNpc", pPlayer, "")
+end
+
+function HolocronJedi:despawnDiscoveryNpc(pPlayer, params)
+    if pPlayer == nil then return end
+    local npcID = tonumber(rsd(pPlayer, "discovery_npc_id")) or 0
+    local pNpc = npcID > 0 and getSceneObject(npcID) or nil
+    if pNpc ~= nil then
+        SceneObject(pNpc):destroyObjectFromWorld()
+        SceneObject(pNpc):destroyObjectFromDatabase(true)
+    end
+    wsd(pPlayer, "discovery_npc_id", "0")
+end
 
 function HolocronJedi:bypassProgressionTimers(pCreature)
     if pCreature == nil then return end
@@ -221,26 +504,24 @@ function holocron_dev_add_50_holocrons(pCreature, pTarget)
 
     local status = readScreenPlayData(pCreature, "HolocronJedi", "jedi_status")
     if status == nil then status = "" end
+    local total = getTotalStudies(pCreature)
 
     if status == "" or status == "none" then
-        local used = tonumber(readScreenPlayData(pCreature, "HolocronJedi", "holocrons_used")) or 0
-        local newVal = math.min(used + 50, 10)
-        writeScreenPlayData(pCreature, "HolocronJedi", "holocrons_used", tostring(newVal))
+        local newVal = math.min(total + 50, PADAWAN_STUDIES_NEEDED)
+        setTotalStudies(pCreature, newVal)
         CreatureObject(pCreature):sendSystemMessage("\\#FFFF00[DEV] Padawan holocrons set to " .. newVal .. "/10")
 
     elseif status == "padawan" then
-        local used = tonumber(readScreenPlayData(pCreature, "HolocronJedi", "knight_holocrons_used")) or 0
-        local newVal = math.min(used + 50, 50)
-        writeScreenPlayData(pCreature, "HolocronJedi", "knight_holocrons_used", tostring(newVal))
+        local newVal = math.min(total + 50, KNIGHT_STUDIES_NEEDED)
+        setTotalStudies(pCreature, newVal)
         CreatureObject(pCreature):sendSystemMessage("\\#FFFF00[DEV] Knight holocrons set to " .. newVal .. "/50")
         if newVal >= 50 then
             createEvent(500, "HolocronJedi", "showKnightUnlockPopup", pCreature, "")
         end
 
     elseif status == "knight" then
-        local used = tonumber(readScreenPlayData(pCreature, "HolocronJedi", "master_holocrons_used")) or 0
-        local newVal = math.min(used + 50, 150)
-        writeScreenPlayData(pCreature, "HolocronJedi", "master_holocrons_used", tostring(newVal))
+        local newVal = math.min(total + 50, MASTER_STUDIES_NEEDED)
+        setTotalStudies(pCreature, newVal)
         CreatureObject(pCreature):sendSystemMessage("\\#FFFF00[DEV] Master holocrons set to " .. newVal .. "/150")
         if newVal >= 150 then
             createEvent(500, "HolocronJedi", "showMasterUnlockPopup", pCreature, "")
@@ -259,7 +540,8 @@ function HolocronJedi:searcherAttack(pSearcher, params)
     local dialogue = string.sub(params, sep + 1)
     local pTarget = getSceneObject(playerID)
     if pTarget ~= nil then
-        CreatureObject(pSearcher):say(dialogue)
+        -- CreatureObject:say was removed from the current Lua API.
+        spatialChat(pSearcher, dialogue)
         AiAgent(pSearcher):setDefender(pTarget)
     end
 end
@@ -268,9 +550,10 @@ function holocron_use_for_studies(pCreature, pTarget)
     if pCreature == nil then return end
 
     local status = rsd(pCreature, "jedi_status")
+    local totalStudies = getTotalStudies(pCreature)
 
     if status == "" or status == "none" then
-        local used = tonumber(rsd(pCreature, "holocrons_used")) or 0
+        local used = totalStudies
 
         if used >= 10 then
             sendForceMessage(pCreature, "You have absorbed all you can from these teachings. Seek the Gatekeeper.")
@@ -278,7 +561,7 @@ function holocron_use_for_studies(pCreature, pTarget)
         end
 
         used = used + 1
-        wsd(pCreature, "holocrons_used", used)
+        setTotalStudies(pCreature, used)
         SceneObject(pTarget):destroyObjectFromWorld()
 
         local searcherLines = {
@@ -327,7 +610,7 @@ function holocron_use_for_studies(pCreature, pTarget)
         end
 
     elseif status == "padawan" then
-        local knightUsed = tonumber(rsd(pCreature, "knight_holocrons_used")) or 0
+        local knightUsed = totalStudies
 
         if knightUsed >= 50 then
             sendForceMessage(pCreature, "You have meditated upon enough holocrons. The Gatekeeper senses your growing power. Seek them out.")
@@ -335,7 +618,7 @@ function holocron_use_for_studies(pCreature, pTarget)
         end
 
         knightUsed = knightUsed + 1
-        wsd(pCreature, "knight_holocrons_used", knightUsed)
+        setTotalStudies(pCreature, knightUsed)
         SceneObject(pTarget):destroyObjectFromWorld()
         sendForceMessage(pCreature, "You meditate upon the holocron. Its secrets deepen your connection to the Force. (" .. knightUsed .. "/50 holocrons absorbed)")
 
@@ -344,28 +627,17 @@ function holocron_use_for_studies(pCreature, pTarget)
 
 
             local alignment = rsd(pCreature, "jedi_alignment")
-            local pGhost = CreatureObject(pCreature):getPlayerObject()
-
             if alignment == "dark" then
-                -- Dark alignment already chosen
-                if pGhost ~= nil then
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Dark Jedi Enclave", "", 5079, 306, WAYPOINTYELLOW, true, true, 0)
-                end
+                replaceEnclaveWaypoint(pCreature, "dark")
                 local mailBody = "You have absorbed the wisdom of fifty holocrons. The dark side has tested your resolve and found you worthy.\n\nThe time has come to face the trials of Dark Knighthood. Speak to the Gatekeeper again when you are ready."
                 sendMail("The Force", "The Path to Dark Knighthood", mailBody, CreatureObject(pCreature):getFirstName())
             elseif alignment == "light" then
                 -- Light alignment already chosen
-                if pGhost ~= nil then
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Light Jedi Enclave", "", -5575, 4910, WAYPOINTYELLOW, true, true, 0)
-                end
+                replaceEnclaveWaypoint(pCreature, "light")
                 local mailBody = "You have absorbed the wisdom of fifty holocrons. The Force has tested your patience and found you worthy.\n\nThe time has come to face the trials of Knighthood. Speak to the Gatekeeper again when you are ready."
                 sendMail("The Force", "The Path to Knighthood", mailBody, CreatureObject(pCreature):getFirstName())
             else
-                -- No alignment chosen yet - give both waypoints and explain the choice
-                if pGhost ~= nil then
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Light Jedi Enclave", "", -5575, 4910, WAYPOINTYELLOW, true, true, 0)
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Dark Jedi Enclave", "", 5079, 306, WAYPOINTYELLOW, true, true, 0)
-                end
+                -- The Gatekeeper's moral assessment chooses one path later.
                 local mailBody = "You have absorbed the wisdom of fifty holocrons. The Force has found you ready.\n\nThe time has come to face the trials of Knighthood. Speak to the Gatekeeper again when you are ready to choose your path."
                 sendMail("The Force", "The Path to Knighthood", mailBody, CreatureObject(pCreature):getFirstName())
             end
@@ -375,7 +647,7 @@ function holocron_use_for_studies(pCreature, pTarget)
         end
 
     elseif status == "knight" then
-        local masterUsed = tonumber(rsd(pCreature, "master_holocrons_used")) or 0
+        local masterUsed = totalStudies
 
         if masterUsed >= 150 then
             sendForceMessage(pCreature, "You have absorbed all the holocron teachings you can. The Gatekeeper awaits.")
@@ -383,7 +655,7 @@ function holocron_use_for_studies(pCreature, pTarget)
         end
 
         masterUsed = masterUsed + 1
-        wsd(pCreature, "master_holocrons_used", masterUsed)
+        setTotalStudies(pCreature, masterUsed)
         SceneObject(pTarget):destroyObjectFromWorld()
         sendForceMessage(pCreature, "Ancient wisdom pours into your mind. (" .. masterUsed .. "/150 holocrons absorbed)")
 
@@ -391,18 +663,11 @@ function holocron_use_for_studies(pCreature, pTarget)
             sendForceMessage(pCreature, "You have absorbed the final teachings. The Gatekeeper awaits you one last time. Seek them out.")
 
             local alignment = rsd(pCreature, "jedi_alignment")
-            local pGhost = CreatureObject(pCreature):getPlayerObject()
-            if pGhost ~= nil then
-                if alignment == "dark" then
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Dark Jedi Enclave", "", 5079, 306, WAYPOINTYELLOW, true, true, 0)
-                else
-                    PlayerObject(pGhost):addWaypoint("yavin4", "Light Jedi Enclave", "", -5575, 4910, WAYPOINTYELLOW, true, true, 0)
-                end
-            end
+            replaceEnclaveWaypoint(pCreature, alignment)
 
             local enclaveName = (alignment == "dark") and "Dark Jedi Enclave" or "Light Jedi Enclave"
             local enclaveCoords = (alignment == "dark") and "5079, 306" or "-5575, 4910"
-            local mailBody = "One hundred holocrons. You have meditated upon every fragment of ancient wisdom available to you. The Force has been your constant companion through all of it.\n\nThe time has come to face the final trials - those of the Jedi Master.\n\nSpeak to the Gatekeeper again. They will show you the way forward.\n\nFew reach this moment. Fewer still survive what comes next.\n\nMay the Force guide your final steps."
+            local mailBody = "One hundred and fifty holocrons. You have meditated upon every fragment of ancient wisdom available to you. The Force has been your constant companion through all of it.\n\nThe time has come to face the final trials - those of the Jedi Master.\n\nSpeak to the Gatekeeper again. They will show you the way forward.\n\nFew reach this moment. Fewer still survive what comes next.\n\nMay the Force guide your final steps."
             sendMail("The Force", "The Path to Mastery", mailBody, CreatureObject(pCreature):getFirstName())
 
             -- SUI popup notification
@@ -420,20 +685,62 @@ end
 function holocron_use_custom(pCreature, pTarget)
     if pCreature == nil or pTarget == nil then return end
 
+    local templatePath = SceneObject(pTarget):getTemplateObjectPath()
+    if templatePath == JEDI_DISCOVERY_HOLOCRON then
+        if rsd(pCreature, "jedi_holocron_studies_unlocked") == "1" then
+            sendForceMessage(pCreature, "This damaged holocron has already revealed the path it held for you.")
+            return
+        end
+
+        if rsd(pCreature, "jedi_discovery_state") == DISCOVERY_ACTIVATED then
+            sendForceMessage(pCreature, "The damaged holocron has already awakened. The nearby presence can still be found.")
+            HolocronJedi:beginDiscoveryEncounter(pCreature, "")
+            return
+        end
+
+        local pInventory = CreatureObject(pCreature):getSlottedObject("inventory")
+        if pInventory == nil or SceneObject(pTarget):getParentID() ~= SceneObject(pInventory):getObjectID() then
+            sendForceMessage(pCreature, "You must carry the strange object in your inventory before attempting to activate it.")
+            return
+        end
+
+        if rsd(pCreature, "jedi_discovery_state") ~= DISCOVERY_RECEIVED then
+            sendForceMessage(pCreature, "The strange object remains silent.")
+            return
+        end
+
+        -- Persist activation before consuming the one-time item. If the
+        -- process stops after this write, login recovery recreates the NPC.
+        wsd(pCreature, "jedi_discovery_state", DISCOVERY_ACTIVATED)
+        wsd(pCreature, "jedi_holocron_discovery_activated", "1")
+
+        CreatureObject(pCreature):sendSystemMessage("You turn the strange object slowly in your hands.\n\nFor several moments, nothing happens. Then the object responds. Lines of pale light race across its surface, forming patterns you cannot understand. A low vibration passes through your hands.\n\nAnd then you hear something. Not a voice. Not quite. More like a whisper remembered from a dream.\n\nSomewhere nearby... you suddenly feel that you are no longer alone.")
+
+        SceneObject(pTarget):destroyObjectFromWorld()
+        SceneObject(pTarget):destroyObjectFromDatabase(true)
+        createEvent(750, "HolocronJedi", "beginDiscoveryEncounter", pCreature, "")
+        return
+    end
+
+    if rsd(pCreature, "jedi_holocron_studies_unlocked") ~= "1" then
+        CreatureObject(pCreature):sendSystemMessage("You examine the ancient device.\n\nIts markings are unfamiliar, and whatever purpose it once served remains hidden from you.\n\nFor a moment you think you feel something stirring beneath its surface...\n\nThen it is silent.")
+        return
+    end
+
     local status = rsd(pCreature, "jedi_status")
     local shouldContactGatekeeper = false
     local trainingPeriodActive = false
 
     if status == "" or status == "none" then
-        shouldContactGatekeeper = (tonumber(rsd(pCreature, "holocrons_used")) or 0) >= 10
+        shouldContactGatekeeper = getTotalStudies(pCreature) >= PADAWAN_STUDIES_NEEDED
     elseif status == "padawan" then
         trainingPeriodActive = holocron_progression_training_notice(
             pCreature, "padawan_unlocked_at", "the Jedi Knight Trials")
-        shouldContactGatekeeper = (tonumber(rsd(pCreature, "knight_holocrons_used")) or 0) >= 50
+        shouldContactGatekeeper = getTotalStudies(pCreature) >= KNIGHT_STUDIES_NEEDED
     elseif status == "knight" then
         trainingPeriodActive = holocron_progression_training_notice(
             pCreature, "knight_unlocked_at", "the Grand Jedi Master or Dark Jedi Lord trials")
-        shouldContactGatekeeper = (tonumber(rsd(pCreature, "master_holocrons_used")) or 0) >= 150
+        shouldContactGatekeeper = getTotalStudies(pCreature) >= MASTER_STUDIES_NEEDED
     elseif status == "master_novice" or status == "master_phase2" then
         trainingPeriodActive = holocron_progression_training_notice(
             pCreature, "master_novice_unlocked_at", "the final Grand Jedi Master or Dark Jedi Lord trial")
@@ -453,7 +760,7 @@ function holocron_speak_to_gatekeeper(pCreature, pTarget)
     if pCreature == nil then return end
 
     local status     = rsd(pCreature, "jedi_status")
-    local knightUsed = tonumber(rsd(pCreature, "knight_holocrons_used")) or 0
+    local knightUsed = getTotalStudies(pCreature)
 
     -- Knight trial - Padawan with 50+ holocrons
     if status == "padawan" and knightUsed >= 50 then
@@ -463,7 +770,7 @@ function holocron_speak_to_gatekeeper(pCreature, pTarget)
 
     -- Knight who has used 150 master holocrons - begin master trial phase 1
     if status == "knight" then
-        local masterUsed = tonumber(rsd(pCreature, "master_holocrons_used")) or 0
+        local masterUsed = getTotalStudies(pCreature)
         if masterUsed >= 150 then
             holocron_begin_master_trial(pCreature, pTarget)
             return
@@ -519,39 +826,44 @@ function holocron_speak_to_gatekeeper(pCreature, pTarget)
         end
     end
 
-    wsd(pCreature, "padawan_test_done", "1")
+    wsd(pCreature, "gatekeeper_conversation_ready", "padawan_trial")
 
-    sendForceMessage(pCreature, "The air around you grows still. A presence stirs in the Force...")
-    createEvent(3000, "HolocronJedi", "gkSpeakPart2", pCreature, "")
+    local pGatekeeper = GatekeeperConversation:summonForTrial(pCreature)
+    if pGatekeeper == nil then
+        wsd(pCreature, "gatekeeper_conversation_ready", "")
+        return
+    end
+
+    sendForceMessage(pCreature, "The air around you grows still. The Gatekeeper has appeared nearby. Speak with the apparition to continue your path.")
 end
 
 function HolocronJedi:gkSpeakPart2(pCreature, params)
     if pCreature == nil then return end
-    CreatureObject(pCreature):sendSystemMessage("\\#AADDFF[The Gatekeeper] \\#FFFFFFAh... so you have finally come. I have waited a long time for someone like you.")
+    gatekeeperSpatialSay(pCreature, "You have listened to the voices of those who came before you.")
     createEvent(4000, "HolocronJedi", "gkSpeakPart3", pCreature, "")
 end
 
 function HolocronJedi:gkSpeakPart3(pCreature, params)
     if pCreature == nil then return end
-    CreatureObject(pCreature):sendSystemMessage("\\#AADDFF[The Gatekeeper] \\#FFFFFFThe Force has been whispering your name. You stand at the threshold of something far greater than yourself.")
+    gatekeeperSpatialSay(pCreature, "You have gathered knowledge... but knowledge alone does not make one worthy of the Force.")
     createEvent(4000, "HolocronJedi", "gkSpeakPart4", pCreature, "")
 end
 
 function HolocronJedi:gkSpeakPart4(pCreature, params)
     if pCreature == nil then return end
-    CreatureObject(pCreature):sendSystemMessage("\\#AADDFF[The Gatekeeper] \\#FFFFFFBut before I can open that door... you must prove you are worthy of walking through it.")
+    gatekeeperSpatialSay(pCreature, "Until now, you have been a seeker. That must change.")
     createEvent(4000, "HolocronJedi", "gkSpeakPart5", pCreature, "")
 end
 
 function HolocronJedi:gkSpeakPart5(pCreature, params)
     if pCreature == nil then return end
-    CreatureObject(pCreature):sendSystemMessage("\\#AADDFF[The Gatekeeper] \\#FFFFFFYour awakening has drawn a dark presence. A False Sith - one who has touched the dark side without discipline or purpose.")
+    gatekeeperSpatialSay(pCreature, "Remember this... the Force will not measure the strength of your weapon. It will measure you.")
     createEvent(4000, "HolocronJedi", "gkSpeakPart6", pCreature, "")
 end
 
 function HolocronJedi:gkSpeakPart6(pCreature, params)
     if pCreature == nil then return end
-    CreatureObject(pCreature):sendSystemMessage("\\#AADDFF[The Gatekeeper] \\#FFFFFFFind it. Destroy it. A waypoint will mark its location. Do not return until it is done.")
+    gatekeeperSpatialSay(pCreature, "Very well. Face the dark presence that has answered your awakening. Your waypoint will reveal where it waits.")
 
     local firstName = CreatureObject(pCreature):getFirstName()
     sendMail("The Gatekeeper", "Your Trial Awaits",
@@ -599,7 +911,7 @@ function HolocronJedi:showMasterUnlockPopup(pCreature, params)
 
     local sui = SuiMessageBox.new("HolocronJedi", "emptyCallback")
     sui.setTitle("The Gatekeeper Stirs")
-    sui.setPrompt(name .. ", one hundred holocrons. You have absorbed every teaching available to you.\n\nThe Force has found you worthy of the final trials.\n\nSpeak to the Gatekeeper again. The last path awaits you.")
+    sui.setPrompt(name .. ", one hundred and fifty holocrons. You have absorbed every teaching available to you.\n\nThe Force has found you worthy of the final trials.\n\nSpeak to the Gatekeeper again. The last path awaits you.")
     sui.setOkButtonText("Understood")
     sui.setCancelButtonText("Close")
     sui.sendTo(pCreature)
@@ -615,9 +927,28 @@ end
 function HolocronJedi:onPlayerLoggedIn(pCreature)
     if pCreature == nil then return end
 
+    -- Delayed events do not survive a disconnect. Release a stale scheduling
+    -- guard so login recovery can deliver the one popup if it never appeared.
+    if rsd(pCreature, "jedi_discovery_popup_shown") ~= "1" then
+        wsd(pCreature, "jedi_discovery_popup_scheduled", "0")
+    end
+    self:checkDiscoveryEligibility(pCreature)
+    -- Run the one-time cumulative-to-stage counter migration.
+    getTotalStudies(pCreature)
+
     local status    = rsd(pCreature, "jedi_status")
     local alignment = rsd(pCreature, "jedi_alignment")
     if status == nil then return end
+
+    if CreatureObject(pCreature):hasSkill("force_title_jedi_novice") or
+            CreatureObject(pCreature):hasSkill("force_title_jedi_rank_01") or
+            CreatureObject(pCreature):hasSkill("force_title_jedi_rank_02") then
+        ensureForceSensitiveSchematics(pCreature)
+    end
+
+    if status == "padawan" or status == "knight" then
+        replaceEnclaveWaypoint(pCreature, alignment)
+    end
 
     local knightUsed = tonumber(rsd(pCreature, "knight_holocrons_used")) or 0
     local masterUsed = tonumber(rsd(pCreature, "master_holocrons_used")) or 0
@@ -628,8 +959,8 @@ function HolocronJedi:onPlayerLoggedIn(pCreature)
         return
     end
 
-    -- Master reminder: knight who has hit 100 holocrons
-    if status == "knight" and masterUsed >= 100 then
+    -- Advanced-path reminder: knight who has hit the 150-study milestone.
+    if status == "knight" and masterUsed >= 150 then
         createEvent(5000, "HolocronJedi", "showMasterUnlockPopup", pCreature, "")
         return
     end
@@ -639,7 +970,7 @@ function holocron_begin_knight_trial(pCreature, pTarget)
     if pCreature == nil then return end
 
     local status     = rsd(pCreature, "jedi_status")
-    local knightUsed = tonumber(rsd(pCreature, "knight_holocrons_used")) or 0
+    local knightUsed = getTotalStudies(pCreature)
     local alignment  = rsd(pCreature, "jedi_alignment")
 
     -- Eligibility checks
@@ -669,59 +1000,104 @@ function holocron_begin_knight_trial(pCreature, pTarget)
         return
     end
 
-    -- Always show the path choice - alignment is set when the trial completes
-    local sui = SuiMessageBox.new("HolocronJedi", "onPathChoice")
-    sui.setTitle("Choose Your Path")
-    sui.setPrompt(
-        "You have absorbed " .. knightUsed .. " holocrons. The Force has judged you ready " ..
-        "for the trials of Knighthood.\n\n" ..
-        "Choose your path.\n\n" ..
-        "The Jedi Order walks in the light. They draw strength from peace, " ..
-        "knowledge and serenity.\n\n" ..
-        "The Dark Jedi Order embraces passion, strength and power. " ..
-        "They take what they are owed.\n\n" ..
-        "Which path do you walk?"
-    )
-    sui.setOkButtonText("The Jedi Order")
-    sui.setCancelButtonText("The Dark Jedi Order")
-    sui.sendTo(pCreature)
+    if rsd(pCreature, "jedi_alignment_locked") == "1" then
+        local locked = rsd(pCreature, "jedi_alignment")
+        if locked == "light" or locked == "dark" then
+            replaceEnclaveWaypoint(pCreature, locked)
+            local sui = SuiMessageBox.new("HolocronJedi", locked == "light" and "onKnightTrialConfirmLight" or "onKnightTrialConfirmDark")
+            sui.setTitle(locked == "light" and "Begin the Jedi Knight Trial" or "Begin the Dark Jedi Knight Trial")
+            sui.setPrompt("Your path is already chosen. Four opponents await. Are you prepared to begin?")
+            sui.setOkButtonText("I am ready")
+            sui.setCancelButtonText("Not yet")
+            sui.sendTo(pCreature)
+            return
+        end
+    end
+
+    wsd(pCreature, "knight_moral_score", "0")
+    wsd(pCreature, "knight_moral_question", "1")
+    HolocronJedi:showKnightMoralQuestion(pCreature, 1)
 end
 
-function HolocronJedi:onPathChoice(pPlayer, pSui, eventIndex, ...)
+local KNIGHT_MORAL_QUESTIONS = {
+    {"A defeated enemy lies helpless before you. What decides their fate?", "Mercy. Justice must never become vengeance.", "Power. An enemy spared may rise against me."},
+    {"A settlement refuses your protection and insults your order. How do you answer?", "I protect them anyway; service is not payment for praise.", "I leave them to learn the price of defiance."},
+    {"Forbidden knowledge promises the strength to save someone you love. What do you do?", "Refuse it. Fear cannot be allowed to choose my path.", "Claim it. Power is a tool, and I will decide how it is used."},
+    {"Your closest ally betrays you but later asks forgiveness. What matters most?", "Truth, accountability, and the possibility of redemption.", "The betrayal. Trust broken must be answered with strength."}
+}
+
+function HolocronJedi:showKnightMoralQuestion(pPlayer, question)
+    local q = KNIGHT_MORAL_QUESTIONS[question]
+    if pPlayer == nil or q == nil then return end
+    local sui = SuiMessageBox.new("HolocronJedi", "onKnightMoralAnswer")
+    sui.setTitle("The Gatekeeper's Question " .. question .. " of 4")
+    sui.setPrompt(q[1])
+    sui.setOkButtonText(q[2])
+    sui.setCancelButtonText(q[3])
+    sui.sendTo(pPlayer)
+end
+
+function HolocronJedi:onKnightMoralAnswer(pPlayer, pSui, eventIndex, ...)
     if pPlayer == nil then return end
-    -- eventIndex 0 = OK = Jedi Order (light)
-    -- eventIndex 1 = Cancel = Dark Jedi Order (dark)
-    if eventIndex == 0 then
-        writeScreenPlayData(pPlayer, "HolocronJedi", "jedi_alignment", "light")
-        -- Show light trial confirmation
-        local sui = SuiMessageBox.new("HolocronJedi", "onKnightTrialConfirmLight")
-        sui.setTitle("Begin the Jedi Knight Trial")
-        sui.setPrompt(
-            "You have chosen the path of the Jedi Order.\n\n" ..
-            "Four servants of the dark side will face you - each a challenge to the Jedi Code. " ..
-            "Face them. Silence them. Let the Code guide your blade.\n\n" ..
-            "They will come to you. Be ready.\n\n" ..
-            "Are you prepared to begin?"
-        )
-        sui.setOkButtonText("I am ready")
-        sui.setCancelButtonText("Not yet")
+    local score = tonumber(rsd(pPlayer, "knight_moral_score")) or 0
+    score = score + (eventIndex == 0 and 1 or -1)
+    local question = (tonumber(rsd(pPlayer, "knight_moral_question")) or 1) + 1
+    wsd(pPlayer, "knight_moral_score", score)
+    wsd(pPlayer, "knight_moral_question", question)
+    if question <= 4 then
+        self:showKnightMoralQuestion(pPlayer, question)
+    elseif score == 0 then
+        local sui = SuiMessageBox.new("HolocronJedi", "onKnightTieBreaker")
+        sui.setTitle("The Gatekeeper's Final Question")
+        sui.setPrompt("When peace and personal power cannot coexist, which do you surrender?")
+        sui.setOkButtonText("I surrender power")
+        sui.setCancelButtonText("I surrender peace")
         sui.sendTo(pPlayer)
     else
-        writeScreenPlayData(pPlayer, "HolocronJedi", "jedi_alignment", "dark")
-        -- Show dark trial confirmation
-        local sui = SuiMessageBox.new("HolocronJedi", "onKnightTrialConfirmDark")
-        sui.setTitle("Begin the Dark Jedi Knight Trial")
-        sui.setPrompt(
-            "You have chosen the path of the Dark Jedi Order.\n\n" ..
-            "The dark side does not grant rank - it is taken. Four shadows will face you. " ..
-            "Each embodies a truth of the Sith Code. Destroy them all.\n\n" ..
-            "They will come to you. Be ready.\n\n" ..
-            "Are you prepared to begin?"
-        )
-        sui.setOkButtonText("I am ready")
-        sui.setCancelButtonText("Not yet")
-        sui.sendTo(pPlayer)
+        self:showKnightPathConfirmation(pPlayer, score > 0 and "light" or "dark")
     end
+end
+
+function HolocronJedi:onKnightTieBreaker(pPlayer, pSui, eventIndex, ...)
+    if pPlayer == nil then return end
+    self:showKnightPathConfirmation(pPlayer, eventIndex == 0 and "light" or "dark")
+end
+
+function HolocronJedi:showKnightPathConfirmation(pPlayer, alignment)
+    wsd(pPlayer, "knight_alignment_candidate", alignment)
+    local light = alignment == "light"
+    local sui = SuiMessageBox.new("HolocronJedi", "onKnightPathConfirmation")
+    sui.setTitle(light and "The Path of Light" or "The Path of Darkness")
+    sui.setPrompt(light and
+        "Your answers reveal patience, mercy, and service. The Gatekeeper sees the path of the Jedi before you. Once accepted, this choice is permanent. Do you accept it?" or
+        "Your answers reveal passion, dominance, and an unwillingness to surrender power. The Gatekeeper sees the dark path before you. Once accepted, this choice is permanent. Do you accept it?")
+    sui.setOkButtonText("Accept this path")
+    sui.setCancelButtonText("Reconsider my answers")
+    sui.sendTo(pPlayer)
+end
+
+function HolocronJedi:onKnightPathConfirmation(pPlayer, pSui, eventIndex, ...)
+    if pPlayer == nil then return end
+    if eventIndex ~= 0 then
+        wsd(pPlayer, "knight_moral_score", "0")
+        wsd(pPlayer, "knight_moral_question", "1")
+        self:showKnightMoralQuestion(pPlayer, 1)
+        return
+    end
+    local alignment = rsd(pPlayer, "knight_alignment_candidate")
+    if alignment ~= "light" and alignment ~= "dark" then return end
+    wsd(pPlayer, "jedi_alignment", alignment)
+    wsd(pPlayer, "jedi_alignment_locked", "1")
+    replaceEnclaveWaypoint(pPlayer, alignment)
+    local sui = SuiMessageBox.new("HolocronJedi", alignment == "light" and "onKnightTrialConfirmLight" or "onKnightTrialConfirmDark")
+    sui.setTitle(alignment == "light" and "Begin the Jedi Knight Trial" or "Begin the Dark Jedi Knight Trial")
+    sui.setPrompt((alignment == "light" and
+        "The Gatekeeper inclines his head. 'Then walk in the light, and let each choice prove your answer.'" or
+        "The Gatekeeper's image darkens. 'Then claim your path. Let no weakness survive your trial.'") ..
+        "\n\nFour opponents will come for you. Are you prepared to begin?")
+    sui.setOkButtonText("I am ready")
+    sui.setCancelButtonText("Not yet")
+    sui.sendTo(pPlayer)
 end
 
 function HolocronJedi:onKnightTrialConfirmLight(pPlayer, pSui, eventIndex, ...)
@@ -899,6 +1275,10 @@ function holocron_grant_padawan(pCreature)
     -- Set our custom progression state.
     wsd(pCreature, "jedi_status", "padawan")
     wsd(pCreature, "padawan_unlocked_at", os.time())
+    wsd(pCreature, "holocrons_used", "0")
+    wsd(pCreature, "knight_holocrons_used", "0")
+    wsd(pCreature, "stage_counter_migrated", "1")
+    wsd(pCreature, "holocron_studies_total", "")
 
     PlayerObject(pGhost):setJediState(1)
 
@@ -912,6 +1292,10 @@ function holocron_grant_padawan(pCreature)
         )
         return
     end
+
+    ensureForceSensitiveSchematics(pCreature)
+
+    replaceEnclaveWaypoint(pCreature, rsd(pCreature, "jedi_alignment"))
 
     CreatureObject(pCreature):sendSystemMessage(
         "\\#AADDFF[Jedi System] \\#FFFFFFYour connection to the Force has awakened. You are now a Jedi Padawan."
@@ -941,6 +1325,9 @@ function holocron_grant_knight(pCreature, alignment)
     wsd(pCreature, "jedi_status", "knight")
     wsd(pCreature, "jedi_alignment", alignment)
     wsd(pCreature, "knight_unlocked_at", os.time())
+    wsd(pCreature, "knight_holocrons_used", "0")
+    wsd(pCreature, "master_holocrons_used", "0")
+    wsd(pCreature, "holocron_studies_total", "")
 
     local councilType = (alignment == "dark") and 2 or 1
     writeScreenPlayData(pCreature, "JediTrials", "JediCouncil", tostring(councilType))
@@ -1014,12 +1401,8 @@ end
 -- MASTER TRIAL PHASE 1 — 150 Holocrons
 -- ============================================================
 
-function holocron_begin_master_trial(pCreature, pTarget)
+function holocron_begin_master_trial_legacy(pCreature, pTarget)
     if pCreature == nil then return end
-
-    if not holocron_progression_timer_ready(pCreature, "knight_unlocked_at", "The Grand Master or Dark Lord trials") then
-        return
-    end
 
     local alignment = rsd(pCreature, "jedi_alignment")
     local name = CreatureObject(pCreature):getFirstName()
@@ -1069,7 +1452,7 @@ function HolocronJedi:onMasterTrial1Confirm(pPlayer, pSui, eventIndex, ...)
     -- Add red waypoint
     local pGhost = CreatureObject(pPlayer):getPlayerObject()
     if pGhost ~= nil then
-        local wpID = PlayerObject(pGhost):addWaypoint(zone, "Revan", "", px + 50, py, WAYPOINTRED, true, true, 0)
+        local wpID = PlayerObject(pGhost):addWaypoint(zone, "Revan", "", px + 50, 0, py, WAYPOINTRED, true, true, 0)
         writeScreenPlayData(pPlayer, "HolocronJedi", "revan_wp_id", tostring(wpID))
     end
 
@@ -1084,12 +1467,8 @@ end
 -- MASTER TRIAL PHASE 3 — Final Trial (after training master tree)
 -- ============================================================
 
-function holocron_begin_master_trial_final(pCreature, pTarget)
+function holocron_begin_master_trial_final_legacy(pCreature, pTarget)
     if pCreature == nil then return end
-
-    if not holocron_progression_timer_ready(pCreature, "master_novice_unlocked_at", "The final Grand Master or Dark Lord trial") then
-        return
-    end
 
     local alignment = rsd(pCreature, "jedi_alignment")
     local name = CreatureObject(pCreature):getFirstName()
@@ -1136,7 +1515,7 @@ function HolocronJedi:onMasterTrialFinalConfirm(pPlayer, pSui, eventIndex, ...)
 
     local pGhost = CreatureObject(pPlayer):getPlayerObject()
     if pGhost ~= nil then
-        local wpID = PlayerObject(pGhost):addWaypoint(zone, "Revan", "", px + 50, py, WAYPOINTRED, true, true, 0)
+        local wpID = PlayerObject(pGhost):addWaypoint(zone, "Revan", "", px + 50, 0, py, WAYPOINTRED, true, true, 0)
         writeScreenPlayData(pPlayer, "HolocronJedi", "revan_wp_id", tostring(wpID))
     end
 
@@ -1185,6 +1564,19 @@ function HolocronJedi:pollRevanKill(pPlayer, params)
     end
 end
 
+-- Sole active Master-trial entry points. The legacy callbacks above are kept
+-- under explicit names only for save/event compatibility and are never used
+-- by new progression.
+function holocron_begin_master_trial(pCreature, pTarget)
+    if pCreature == nil or MasterTrial == nil then return end
+    MasterTrial:onSeekFinalTrial(pCreature, pTarget)
+end
+
+function holocron_begin_master_trial_final(pCreature, pTarget)
+    if pCreature == nil or MasterTrial == nil then return end
+    MasterTrial:onSeekFinalConfrontation(pCreature, pTarget)
+end
+
 function holocron_grant_master(pCreature)
     if pCreature == nil then return end
 
@@ -1214,6 +1606,9 @@ function holocron_reset_progress(pCreature, pTarget)
     writeScreenPlayData(pCreature, "HolocronJedi", "knight_holocrons_used", "0")
     writeScreenPlayData(pCreature, "HolocronJedi", "master_holocrons_used", "0")
     writeScreenPlayData(pCreature, "HolocronJedi", "jedi_alignment", "")
+    writeScreenPlayData(pCreature, "HolocronJedi", "jedi_alignment_locked", "0")
+    writeScreenPlayData(pCreature, "HolocronJedi", "holocron_studies_total", "0")
+    writeScreenPlayData(pCreature, "HolocronJedi", "jedi_enclave_waypoint_id", "0")
 
     local pGhostObj = CreatureObject(pCreature):getPlayerObject()
     if pGhostObj ~= nil then
@@ -1234,11 +1629,12 @@ function holocron_debug_status(pCreature)
     local alignment  = rsd(pCreature, "jedi_alignment")
 
     CreatureObject(pCreature):sendSystemMessage("=== JEDI STATUS DEBUG ===")
+    CreatureObject(pCreature):sendSystemMessage("Current Stage Holocron Studies: " .. getTotalStudies(pCreature))
     CreatureObject(pCreature):sendSystemMessage("Status: " .. (status == "" and "none" or status))
     CreatureObject(pCreature):sendSystemMessage("Padawan Holocrons: " .. (used == "" and "0" or used) .. "/10")
     CreatureObject(pCreature):sendSystemMessage("Gatekeeper Test Done: " .. (testDone == "1" and "YES" or "NO"))
     CreatureObject(pCreature):sendSystemMessage("Knight Holocrons: " .. (knightUsed == "" and "0" or knightUsed) .. "/50")
-    CreatureObject(pCreature):sendSystemMessage("Master Holocrons: " .. (masterUsed == "" and "0" or masterUsed) .. "/100")
+    CreatureObject(pCreature):sendSystemMessage("Master Holocrons: " .. (masterUsed == "" and "0" or masterUsed) .. "/150")
     CreatureObject(pCreature):sendSystemMessage("Alignment: " .. (alignment == "" and "none" or alignment))
     CreatureObject(pCreature):sendSystemMessage("=========================")
 end

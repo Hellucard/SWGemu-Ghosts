@@ -43,6 +43,22 @@ void ResourceSpawnImplementation::clampAttributeRange(int minimum, int maximum) 
 	}
 }
 
+void ResourceSpawnImplementation::quantizeAttributeRange(int minimum, int maximum, int increment) {
+	if (increment <= 0)
+		return;
+
+	for (int i = 0; i < spawnAttributes.size(); ++i) {
+		String attribute = spawnAttributes.elementAt(i).getKey();
+		int value = spawnAttributes.get(i);
+
+		value = Math::max(minimum, Math::min(maximum, value));
+		value = minimum + (((value - minimum + (increment / 2)) / increment) * increment);
+		value = Math::min(maximum, value);
+
+		spawnAttributes.put(attribute, value);
+	}
+}
+
 int ResourceSpawnImplementation::getAttributeAndValue(String& attribute,
 		int index) const {
 

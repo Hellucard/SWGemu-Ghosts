@@ -42,7 +42,14 @@
 
 
 object_tangible_survey_tool_survey_tool_all = object_tangible_survey_tool_shared_survey_tool_all:new {
-
+	templateType = SURVEYTOOL,
+	-- Current Core3 supports one resource family per survey tool.  Use the
+	-- universal tool's existing client appearance as the starter organic tool;
+	-- the artisan also receives the inorganic and chemical tools below.
+	toolType = 0,
+	toolAnimation = "clienteffect/survey_tool_lumber.cef",
+	sampleAnimation = "clienteffect/survey_sample_lumber.cef",
+	surveyType = "organic"
 }
 
 ObjectTemplates:addTemplate(object_tangible_survey_tool_survey_tool_all, "object/tangible/survey_tool/survey_tool_all.iff")

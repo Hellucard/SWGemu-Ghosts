@@ -14,18 +14,13 @@ require("scripts.managers.spawn_manager.regions")
 
 korriban_regions = {
 	-- No-spawn zones (cities, caves, sacred areas)
-	{"dreshdae_valley", 1060, -5332, {CIRCLE, 100}, NOSPAWNAREA + NOBUILDZONEAREA},
-	{"valley_of_the_dark_lords", -1346, -830, {CIRCLE, 100}, NOBUILDZONEAREA},
+	{"dreshdae_valley", 1060, -5332, {CIRCLE, 400}, NOSPAWNAREA + NOBUILDZONEAREA},
+	{"valley_of_the_dark_lords", -1346, -830, {CIRCLE, 1000}, NOBUILDZONEAREA},
 	{"shyrack_cave", 457, -235, {CIRCLE, 250}, NOBUILDZONEAREA},
-	{"archaeological_outpost", -1712, -679, {CIRCLE, 100}, NOBUILDZONEAREA + NOSPAWNAREA},
+	{"archaeological_outpost", -1712, -679, {CIRCLE, 200}, NOBUILDZONEAREA + NOSPAWNAREA},
 	
 	-- World spawner - covers entire planet
-	-- World spawners (split into several circles to increase local density)
-	{"world_spawner_center", 0, 0, {CIRCLE, 7000}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global"}, 2048},
-	{"world_spawner_ne", 4500, 4500, {CIRCLE, 4500}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global"}, 1024},
-	{"world_spawner_nw", -4500, 4500, {CIRCLE, 4500}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global"}, 1024},
-	{"world_spawner_se", 4500, -4500, {CIRCLE, 4500}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global"}, 1024},
-	{"world_spawner_sw", -4500, -4500, {CIRCLE, 4500}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global"}, 1024},
+	{"world_spawner", 0, 0, {CIRCLE, -1}, SPAWNAREA + WORLDSPAWNAREA, {"korriban_world", "global_hard"}, 2048}
 }
 
 korriban_static_spawns = {

@@ -1,5 +1,9 @@
 includeFile("conversation.lua")
 
+-- Ghosts Jedi discovery
+includeFile("conversations/jedi/holocron_discovery_scholar_conv.lua")
+includeFile("conversations/jedi/gatekeeper_trial_conv.lua")
+
 -- ** THEMEPARKS **
 
 -- Tutorial

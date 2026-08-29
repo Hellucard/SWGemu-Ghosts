@@ -240,6 +240,27 @@ void PetDeedImplementation::updateCraftingValues(CraftingValues* values, bool fi
 	float clFactor = 0;
 
 	if (manufact == nullptr) {
+		// Direct loot objects have CraftingValues but no manufacture schematic.
+		// Initialise pet deeds from their registered creature template instead of
+		// leaving the unusable PetDeed defaults (10 HAM, 20 damage, 0 speed).
+		if (values->getPlayer() == nullptr) {
+			Reference<CreatureTemplate*> petTemplate = CreatureTemplateManager::instance()->getTemplate(mobileTemplate.hashCode());
+
+			if (petTemplate != nullptr) {
+				level = petTemplate->getLevel();
+				chanceHit = petTemplate->getChanceHit();
+				attackSpeed = petTemplate->getAttackSpeed();
+				damageMin = petTemplate->getDamageMin();
+				damageMax = petTemplate->getDamageMax();
+				health = petTemplate->getBaseHAMmax();
+				action = petTemplate->getBaseHAMmax();
+				mind = petTemplate->getBaseHAMmax();
+				regen = petTemplate->getBaseHAMmax() / 10;
+			}
+
+			return;
+		}
+
 		String templateName;
 		SharedObjectTemplate* templ = getObjectTemplate();
 

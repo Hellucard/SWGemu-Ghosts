@@ -67,6 +67,18 @@ void SceneObjectImplementation::initializeTransientMembers() {
 	templateObject = TemplateManager::instance()->getTemplate(serverObjectCRC);
 
 	if (templateObject != nullptr) {
+		// Refresh persisted player storage limits from the current Ghosts policy.
+		// containerVolumeLimit is serialized, so changing only the template does
+		// not update inventories and backpacks that already exist in the database.
+		const String& templatePath = templateObject->getFullTemplateString();
+
+		if (templatePath == "object/tangible/inventory/character_inventory.iff") {
+			setContainerVolumeLimit(200);
+		} else if (templatePath.contains("object/tangible/wearables/backpack/")) {
+			setContainerVolumeLimit(
+				templatePath.contains("pouch") || templatePath.contains("fannypack") ? 50 : 150);
+		}
+
 		createContainerComponent();
 
 		String zoneComponentClassName = templateObject->getGroundZoneComponent();
@@ -191,10 +203,10 @@ void SceneObjectImplementation::loadTemplateData(SharedObjectTemplate* templateD
 	const String& templatePath = templateData->getFullTemplateString();
 
 	if (templatePath == "object/tangible/inventory/character_inventory.iff") {
-		containerVolumeLimit = 100;
+		containerVolumeLimit = 200;
 	} else if (templatePath.contains("object/tangible/wearables/backpack/")) {
 		containerVolumeLimit =
-			(templatePath.contains("pouch") || templatePath.contains("fannypack")) ? 50 : 250;
+			(templatePath.contains("pouch") || templatePath.contains("fannypack")) ? 50 : 150;
 	}
 
 	if (templateData->getCollisionActionBlockFlags() == 255) { //loading meshes for line of sight
@@ -420,6 +432,20 @@ void SceneObjectImplementation::sendWithoutContainerObjectsTo(SceneObject* playe
 }
 
 void SceneObjectImplementation::notifyLoadFromDatabase() {
+	// Serialized container limits override template values during database load.
+	// Reapply the current player storage policy after deserialization so existing
+	// inventories and backpacks receive the same limits as newly created ones.
+	if (templateObject != nullptr) {
+		const String& templatePath = templateObject->getFullTemplateString();
+
+		if (templatePath == "object/tangible/inventory/character_inventory.iff") {
+			setContainerVolumeLimit(200);
+		} else if (templatePath.contains("object/tangible/wearables/backpack/")) {
+			setContainerVolumeLimit(
+				templatePath.contains("pouch") || templatePath.contains("fannypack") ? 50 : 150);
+		}
+	}
+
 	if (!containerObjects.hasDelayedLoadOperationMode()) {
 		for (int i = 0; i < slottedObjects.size(); ++i) {
 			ManagedReference<SceneObject* > obj = slottedObjects.get(i);

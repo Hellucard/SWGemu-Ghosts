@@ -9,6 +9,14 @@ JUNKJAWA = 64
 JUNKGUNGAN = 128
 JUNKCORSEC = 256
 
+includeFile("hk47_deed.lua")
+includeFile("items/world.lua")
+includeFile("items/bonepile.lua")
+includeFile("items/collection/collectiontierone.lua")
+includeFile("items/collection/collectiontiertwo.lua")
+includeFile("items/collection/collectiontierthree.lua")
+includeFile("items/collection/collectiondiamond.lua")
+
 --items folder
 includeFile("items/attachment_armor.lua")
 includeFile("items/attachment_clothing.lua")
@@ -2281,3 +2289,8 @@ includeFile("items/wearables/wookiee/wke_skirt_s01.lua")
 includeFile("items/wearables/wookiee/wke_skirt_s02.lua")
 includeFile("items/wearables/wookiee/wke_skirt_s03.lua")
 includeFile("items/wearables/wookiee/wke_skirt_s04.lua")
+
+-- Fifth-generation lightsaber schematic loot entries restored from Ghosts_old.
+includeFile("items/lightsabers/ls_one_hand_gen5_scheme.lua")
+includeFile("items/lightsabers/ls_polearm_gen5_scheme.lua")
+includeFile("items/lightsabers/ls_two_hand_gen5_scheme.lua")

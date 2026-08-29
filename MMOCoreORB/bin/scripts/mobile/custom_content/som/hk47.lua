@@ -25,10 +25,12 @@ hk47 = Creature:new {
 	optionsBitmask = AIENABLED,
 	diet = HERBIVORE,
 
-	templates = {"object/mobile/som/hk47.iff"},
+	templates = {"object/mobile/som/shared_hk47.iff"},
 	lootGroups = {
 		{
-			groups = {},
+			groups = {
+				{group = "hk47_loot", chance = 10000000},
+			},
 			lootChance = 2100000
 		}
 	},

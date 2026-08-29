@@ -3,9 +3,10 @@ CorelliaCitySpawners = InterestAreaSpawner:new {
 
 	screenplayName = "CorelliaCitySpawners",
 	zoneName = "corellia",
+	startDelay = 1,
 
-	-- Chance out of 100 that a spawner has to be activate upon server start. 100 is always activated
-	activationChance = 65,
+	-- Coronet's starter gangs must reliably be present for new characters.
+	activationChance = 100,
 
 	-- Timer to use for mobile respawn
 	respawnTimer = 240,
@@ -23,7 +24,13 @@ CorelliaCitySpawners = InterestAreaSpawner:new {
 		{-693, 7, -4259, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
 		{-705, 4, -4632, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
 		{-496, 27, -4840, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
-		{-219.2, 28.1, -4943.2, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
+		-- Meatlump bunker southwest of Coronet.
+		{-207, 28.1, -4993, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
+		-- Booster's four waypoint-marked Coronet bunker spawn eggs.
+		{-194.307, 28.0, -5003.20, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
+		{-203.012, 28.0, -4926.65, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
+		{-245.540, 28.0, -4928.94, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
+		{-300.359, 28.0, -4931.57, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
 		{-652.7, 2.9, -4791.1, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
 		{-653.4, 22.8, -4421.2, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
 		{-531.5, 26.6, -4160.8, 0, 20, 60, 10, 90, {{"meatlump1", 4}, {"meatlump2", 4}, {"meatlump3", 3}, {"meatlump4", 3}, {"ragtag1", 4}, {"ragtag2", 4}, {"ragtag3", 3}, {"ragtag4", 3}}},
@@ -70,12 +77,7 @@ function CorelliaCitySpawners:start()
 		print(self.screenplayName .. " called start() ")
 	end
 
+	self:spawnGuaranteedStatics(10)
 	self:createSpawners()
-
-	if (self.debug) then
-		createEvent(20 * 1000, "CorelliaCitySpawners", "activateSpawners", nil, "")
-	else
-		-- delay to start spawners
-		createEvent(self.startDelay * 60 * 1000, "CorelliaCitySpawners", "activateSpawners", nil, "")
-	end
+	createEvent(self.startDelay * 60 * 1000, self.screenplayName, "activateSpawners", nil, "")
 end

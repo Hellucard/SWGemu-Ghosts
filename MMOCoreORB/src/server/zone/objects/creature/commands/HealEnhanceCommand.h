@@ -88,22 +88,8 @@ public:
 			return false;
 		}
 
-		int medicalRatingNotIncludingCityBonus = enhancer->getSkillMod("private_medical_rating") - enhancer->getSkillModOfType("private_medical_rating", SkillModManager::CITY);
-
-		if (medicalRatingNotIncludingCityBonus <= 0) {
-			enhancer->sendSystemMessage("@healing_response:must_be_near_droid"); // You must be in a hospital, at a campsite, or near a surgical droid to do that.
-			return false;
-		} else {
-			// Building private medical rating always takes precedence, If it a client object structure, no medical rating will prevent buffs/wound healing.
-			ManagedReference<SceneObject*> root = enhancer->getRootParent();
-
-			if (root != nullptr && root->isClientObject()) {
-				if (enhancer->getSkillModOfType("private_medical_rating", SkillModManager::STRUCTURE) == 0) {
-					enhancer->sendSystemMessage("@healing_response:must_be_in_hospital"); // You must be in a hospital or at a campsite to do that.
-					return false;
-				}
-			}
-		}
+		// Ghosts rule: qualified medical characters may apply enhancement packs
+		// anywhere. Medicine, skill, combat, target, and cooldown checks remain.
 
 		if (enhancer->isInCombat()) {
 			enhancer->sendSystemMessage("You cannot HealEnhance yourself while in Combat.");

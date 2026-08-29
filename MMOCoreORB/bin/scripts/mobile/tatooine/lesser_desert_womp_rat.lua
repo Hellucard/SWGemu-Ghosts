@@ -30,7 +30,7 @@ lesser_desert_womp_rat = Creature:new {
 	hues = { 16, 17, 18, 19, 20, 21, 22, 23 },
 	controlDeviceTemplate = "object/intangible/pet/womp_rat_hue.iff",
 	scale = 0.8,
-	lootGroups = {},
+	lootGroups = {{groups = {{group = "junk", chance = 8000000}, {group = "wearables_common", chance = 1000000}, {group = "armor_all", chance = 500000}, {group = "melee_weapons", chance = 500000}}, lootChance = 2500000}},
 
 	-- Primary and secondary weapon should be different types (rifle/carbine, carbine/pistol, rifle/unarmed, etc)
 	-- Unarmed should be put on secondary unless the mobile doesn't use weapons, in which case "unarmed" should be put primary and "none" as secondary

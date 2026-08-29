@@ -865,6 +865,23 @@ void CraftingSessionImplementation::initialAssembly(int clientCounter) {
 	// Update the prototype with new values
 	prototype->updateCraftingValues(craftingValues, true);
 
+	// Crafted equipment does not pass through LootManager::setJunkValue().
+	// Preserve any template-defined value; otherwise give ordinary crafted
+	// weapons/armor and clothing a conservative complexity-based resale value.
+	if (prototype->getJunkValue() <= 0) {
+		int junkDealerType = 0;
+
+		if (prototype->isWeaponObject() || prototype->isArmorObject())
+			junkDealerType = 4; // JUNKARMS
+		else if (prototype->isWearableObject())
+			junkDealerType = 2; // JUNKFINERY
+
+		if (junkDealerType != 0) {
+			prototype->setJunkDealerNeeded(junkDealerType);
+			prototype->setJunkValue(Math::max(1, (int)round(prototype->getComplexity() * 10.f)));
+		}
+	}
+
 	addSkillMods();
 
 	addWeaponDots();
@@ -1387,11 +1404,11 @@ void CraftingSessionImplementation::createPrototype(int clientCounter, bool crea
 		int xp = manufactureSchematic->getDraftSchematic()->getXpAmount();
 
 		if (createItem) {
-			startCreationTasks(manufactureSchematic->getComplexity() * 2, false);
+			startCreationTasks(1, false);
 
 		} else {
 			// This is for practicing
-			startCreationTasks(manufactureSchematic->getComplexity() * 2, true);
+			startCreationTasks(1, true);
 			xp = round(xp * 1.05f);
 		}
 

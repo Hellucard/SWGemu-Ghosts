@@ -29,6 +29,7 @@ class SpawnEggObject extends TangibleObject {
 		Logger.setLoggingName("SpawnEggObject");
 
 		spawnerName = "InterestAreaSpawner";
+		super.invisible = true;
 	}
 
 	/**

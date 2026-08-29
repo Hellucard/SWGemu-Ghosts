@@ -70,12 +70,7 @@ function TatooineCitySpawners:start()
 		print(self.screenplayName .. " called start() ")
 	end
 
+	self:spawnGuaranteedStatics(10)
 	self:createSpawners()
-
-	if (self.debug) then
-		createEvent(20 * 1000, "TatooineCitySpawners", "activateSpawners", nil, "")
-	else
-		-- delay to start spawners
-		createEvent(self.startDelay * 60 * 1000, "TatooineCitySpawners", "activateSpawners", nil, "")
-	end
+	createEvent(self.startDelay * 60 * 1000, self.screenplayName, "activateSpawners", nil, "")
 end

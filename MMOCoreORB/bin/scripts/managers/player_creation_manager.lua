@@ -35,9 +35,11 @@ survivalKnife = "object/weapon/melee/knife/knife_survival.iff"
 
 genericTool = "object/tangible/crafting/station/generic_tool.iff"
 
+unitool = "object/tangible/survey_tool/survey_tool_all.iff"
+
 foodTool = "object/tangible/crafting/station/food_tool.iff"
 
-mineralTool = "object/tangible/survey_tool/survey_tool_mineral.iff"
+mineralTool = "object/tangible/survey_tool/survey_tool_inorganic.iff"
 
 chemicalTool = "object/tangible/survey_tool/survey_tool_liquid.iff"
 
@@ -45,18 +47,18 @@ slitherhorn = "object/tangible/instrument/slitherhorn.iff"
 
 marojMelon = "object/tangible/food/foraged/foraged_fruit_s1.iff"
 
-x31Speeder = "object/tangible/deed/vehicle_deed/landspeeder_x31_deed.iff"
+swoop = "object/tangible/deed/vehicle_deed/speederbike_swoop_deed.iff"
 
 padawanRobe = "object/tangible/wearables/robe/robe_jedi_padawan.iff"
 
 professionSpecificItems = {
 	combat_brawler = { brawlerOneHander, brawlerTwoHander, brawlerPolearm },
 	combat_marksman = { marksmanPistol, marksmanCarbine, marksmanRifle },
-	crafting_artisan = { genericTool, mineralTool, chemicalTool },
+	crafting_artisan = { genericTool, mineralTool, chemicalTool,unitool },
 	combat_jedi = { padawanRobe },
 	outdoors_scout = { genericTool },
 	science_medic = { foodTool },
 	social_entertainer = { slitherhorn }
 }
 
-commonStartingItems = { marojMelon, survivalKnife, x31Speeder }
+commonStartingItems = { marojMelon, survivalKnife, swoop }

@@ -61,10 +61,17 @@ includeFile("utils/quest_spawner.lua")
 includeFile("tools/tools.lua")
 includeFile("tools/shuttle_dropoff.lua")
 includeFile("tools/firework_event.lua")
-includeFile("tools/FlurryBuffTerminal.lua")
+includeFile("tools/MedicalDroidEnhancement.lua")
+includeFile("tools/player_mission_creator.lua")
+includeFile("tools/player_entertainer_mission_creator.lua")
+
+-- Custom-planet travel points need a scheduled shuttle and ticket collector,
+-- in addition to the purchase terminals placed by their city screenplays.
+includeFile("cities/custom_planet_travel_services.lua")
 
 includeFile("trainers/trainerData.lua")
 includeFile("trainers/skillTrainer.lua")
+includeFile("trainers/static_jedi_trainers.lua")
 includeFile("trainers/trainerConvHandler.lua")
 
 -- GCW
@@ -286,6 +293,10 @@ includeFile("jedi/dark_enclave_knight.lua")
 includeFile("jedi/master_trial.lua")
 includeFile("jedi/jedi_hunters.lua")
 includeFile("jedi/jedi_visibility_hunters.lua")
+includeFile("jedi/enclave_spawns.lua")
+includeFile("jedi/jedi_trainer_spawns.lua")
+includeFile("jedi/conversations/HolocronDiscoveryScholarConvoHandler.lua")
+includeFile("jedi/conversations/GatekeeperTrialConvoHandler.lua")
 
 -- Jedi Objects
 includeFile("jedi/components/ForceShrineMenuComponent.lua")
@@ -357,6 +368,10 @@ includeFile("events/eventPromoter.lua")
 includeFile("events/lifeDay.lua")
 includeFile("events/buffTerminalMenuComponent.lua")
 includeFile("events/race_droid.lua")
+includeFile("events/inquisitor_boss.lua")
+-- Use the current five-boss rotating encounter.  The older Flurry spawner is
+-- intentionally left dormant to avoid duplicate world-boss populations.
+includeFile("events/world_boss_spawner.lua")
 
 -- Hero of Tatooine
 includeFile("tasks/hero_of_tatooine/conversations/hermitConvoHandler.lua")

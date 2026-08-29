@@ -1,15 +1,33 @@
 SkillTrainer = ScreenPlay:new {}
 
 function SkillTrainer:getTrainerType(pPlayer, pNpc, pConvTemplate)
+	-- Explicit conversation trainer types must win.  In particular, the
+	-- Grand Jedi Master and Dark Jedi Lord trainers use dedicated skill
+	-- tables.  Treating one of those NPCs as the player's generated Jedi
+	-- trainer silently redirects the conversation to trainer_jedi and makes
+	-- the advanced selections resolve against the wrong skill list.
+	local convoTemplate = LuaConversationTemplate(pConvTemplate)
+	local pScreen = convoTemplate:getScreen("trainerType")
+
+	if (pScreen ~= nil) then
+		local screen = LuaConversationScreen(pScreen)
+		local explicitTrainerType = screen:getOptionLink(0)
+
+		if (explicitTrainerType ~= nil and explicitTrainerType ~= "" and explicitTrainerType ~= "trainer_jedi") then
+			return explicitTrainerType
+		end
+	end
+
 	local pGhost = CreatureObject(pPlayer):getPlayerObject()
-	local isJediTrainer = false
 
 	if (pGhost ~= nil and PlayerObject(pGhost):isJediTrainer(pNpc)) then
 		return "trainer_jedi"
 	end
 
-	local convoTemplate = LuaConversationTemplate(pConvTemplate)
-	local pScreen = convoTemplate:getScreen("trainerType")
+	if (pScreen == nil) then
+		return ""
+	end
+
 	local screen = LuaConversationScreen(pScreen)
 
 	return screen:getOptionLink(0)

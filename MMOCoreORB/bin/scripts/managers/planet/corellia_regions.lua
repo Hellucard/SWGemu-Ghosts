@@ -100,7 +100,10 @@ corellia_regions = {
 
 	-- Cities
 	{"@corellia_region_names:bela_vistal", 6788, -5654, {CIRCLE, 480}, CITY + NOSPAWNAREA},
-	{"@corellia_region_names:coronet", -178, -4504, {CIRCLE, 581}, CITY + NOSPAWNAREA},
+	-- Preserve Coronet's full city boundary while allowing beginner creatures
+	-- throughout it. Only the innermost 10 metres remain protected from spawns.
+	{"@corellia_region_names:coronet", -178, -4504, {CIRCLE, 581}, CITY},
+	{"coronet_nospawn_core", -178, -4504, {CIRCLE, 10}, NOSPAWNAREA},
 	{"@corellia_region_names:tyrena", -5282, -2526, {CIRCLE, 622}, CITY + NOSPAWNAREA},
 	{"@corellia_region_names:kor_vella", -3512, 3184, {CIRCLE, 758}, CITY + NOSPAWNAREA},
 	{"@corellia_region_names:doaba_guerfel", 3272, 5456, {CIRCLE, 632}, CITY + NOSPAWNAREA},
@@ -121,7 +124,7 @@ corellia_regions = {
 	{"@corellia_region_names:central_easy", 825, -1959, {RECTANGLE, 4090, 4570}, SPAWNAREA, {"corellia_central_easy"}, 320},
 	{"@corellia_region_names:central_medium", -2075, -1959, {RECTANGLE, 840, 4570}, SPAWNAREA, {"corellia_central_medium"}, 256},
 	{"@corellia_region_names:central_plains", -3296, -2312, {RECTANGLE, 4224, 1496}, SPAWNAREA + NAMEDREGION, {"corellia_central_plains"}, 32},
-	{"@corellia_region_names:coronest_easy_newbie", -178, -4504, {RING, 581, 1000}, SPAWNAREA + NOWORLDSPAWNAREA, {"coronet_easy_newbie"}, 32},
+	{"@corellia_region_names:coronest_easy_newbie", -178, -4504, {RING, 10, 1000}, SPAWNAREA + NOWORLDSPAWNAREA, {"coronet_easy_newbie"}, 32},
 	{"@corellia_region_names:coronet_medium_newbie", -178, -4504, {RING, 1000, 1500}, SPAWNAREA + NOWORLDSPAWNAREA, {"coronet_medium_newbie"}, 32},
 	{"@corellia_region_names:doaba_guefel_easy_newbie", 3272, 5456, {RING, 632, 1000}, SPAWNAREA + NOWORLDSPAWNAREA, {"doaba_guerfel_easy_newbie"}, 32},
 	{"@corellia_region_names:doaba_guefel_medium_newbie", 3272, 5456, {RING, 1000, 1500}, SPAWNAREA + NOWORLDSPAWNAREA, {"doaba_guerfel_medium_newbie"}, 32},

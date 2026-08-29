@@ -30,7 +30,7 @@ tempest_rill = Creature:new {
 	hues = { 24, 25, 26, 27, 28, 29, 30, 31 },
 	controlDeviceTemplate = "object/intangible/pet/dune_lizard_hue.iff",
 	scale = 0.7,
-	lootGroups = {},
+	lootGroups = {{groups = {{group = "junk", chance = 6000000}, {group = "wearables_common", chance = 1500000}, {group = "armor_all", chance = 1500000}, {group = "melee_weapons", chance = 1000000}}, lootChance = 3500000}},
 
 	-- Primary and secondary weapon should be different types (rifle/carbine, carbine/pistol, rifle/unarmed, etc)
 	-- Unarmed should be put on secondary unless the mobile doesn't use weapons, in which case "unarmed" should be put primary and "none" as secondary

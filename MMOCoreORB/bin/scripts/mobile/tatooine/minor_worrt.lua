@@ -30,7 +30,7 @@ minor_worrt = Creature:new {
 	hues = { 24, 25, 26, 27, 28, 29, 30, 31 },
 	controlDeviceTemplate = "object/intangible/pet/worrt_hue.iff",
 	scale = 0.9,
-	lootGroups = {},
+	lootGroups = {{groups = {{group = "junk", chance = 8000000}, {group = "wearables_common", chance = 1500000}, {group = "armor_all", chance = 500000}}, lootChance = 2500000}},
 
 	-- Primary and secondary weapon should be different types (rifle/carbine, carbine/pistol, rifle/unarmed, etc)
 	-- Unarmed should be put on secondary unless the mobile doesn't use weapons, in which case "unarmed" should be put primary and "none" as secondary

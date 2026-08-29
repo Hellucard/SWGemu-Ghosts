@@ -1,4 +1,2 @@
--- Custom Jedi trainer conversations and mobile templates.
-includeFile("conversations/trainer/trainer_grand_master_conv.lua")
-includeFile("trainer/jedi_grand_master_trainer.lua")
-includeFile("trainer/jedi_dark_lord_trainer.lua")
+-- Custom Jedi rank trainers are registered by scripts/mobile/trainer/serverobjects.lua.
+-- Do not load the legacy conversation or duplicate the mobile registrations here.

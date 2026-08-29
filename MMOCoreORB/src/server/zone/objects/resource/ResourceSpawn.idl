@@ -310,6 +310,9 @@ class ResourceSpawn extends SceneObject {
 	@preLocked
 	public native void clampAttributeRange(int minimum, int maximum);
 
+	@preLocked
+	public native void quantizeAttributeRange(int minimum, int maximum, int increment);
+
 	@read
 	public int getAttributeValue(int index) {
 		return spawnAttributes.get(index);

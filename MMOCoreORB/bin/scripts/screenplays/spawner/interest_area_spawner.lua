@@ -111,6 +111,53 @@ function InterestAreaSpawner:createSpawners()
 	writeData(name .. ":TotalSpawners:", count)
 end
 
+-- Spawn a permanent population around every configured interest point. This
+-- is intended for starter-city outskirts where the population must not cycle
+-- inactive with the legacy spawn-egg timers.
+function InterestAreaSpawner:spawnGuaranteedStatics(spawnCount)
+	if spawnCount == nil or spawnCount < 1 then
+		return
+	end
+
+	for locationIndex = 1, #self.spawnerData do
+		local spawn = self.spawnerData[locationIndex]
+		local candidates = {}
+		local configuredGroups = spawn[9]
+
+		for groupIndex = 1, #configuredGroups do
+			local groupName = configuredGroups[groupIndex][1]
+			local group = self.spawnGroups[groupName]
+
+			if group ~= nil then
+				for mobileIndex = 1, #group do
+					table.insert(candidates, group[mobileIndex])
+				end
+			else
+				Logger:log(self.screenplayName .. " has no spawn group named " .. groupName, LT_ERROR)
+			end
+		end
+
+		if #candidates > 0 then
+			for mobileIndex = 1, spawnCount do
+				local angle = ((mobileIndex - 1) / spawnCount) * math.pi * 2
+				local radius = 6 + (((mobileIndex - 1) % 3) * 1.5)
+				local spawnX = spawn[1] + math.cos(angle) * radius
+				local spawnY = spawn[3] + math.sin(angle) * radius
+				local templateName = candidates[((mobileIndex - 1) % #candidates) + 1]
+
+				local pMobile = spawnMobile(self.zoneName, templateName, self.respawnTimer,
+					spawnX, getWorldFloor(spawnX, spawnY, self.zoneName), spawnY,
+					spawn[4], 0)
+
+				if pMobile == nil then
+					Logger:log(self.screenplayName .. " failed static spawn " .. templateName ..
+						" at location " .. locationIndex, LT_ERROR)
+				end
+			end
+		end
+	end
+end
+
 function InterestAreaSpawner:activateSpawners()
 	local name = self.screenplayName
 	local totalSpawners = readData(name .. ":TotalSpawners:")
@@ -216,8 +263,9 @@ function InterestAreaSpawner:activateSpawner(pSpawner)
 	-- Spawn Agents
 	for i = 1, spawnCount, 1 do
 		local randomMob = spawnMobiles[getRandomNumber(#spawnMobiles)]
-		local randomX = x + (getRandomNumber(5, 15) - getRandomNumber(5, 15))
-		local randomY = y + (getRandomNumber(5, 15) - getRandomNumber(5, 15))
+		-- The furthest corner is 9.9 m from the egg.
+		local randomX = x + getRandomNumber(0, 14) - 7
+		local randomY = y + getRandomNumber(0, 14) - 7
 
 		local pMobile = spawnMobile(zoneName, randomMob, -1, randomX, getWorldFloor(randomX, randomY, zoneName), randomY, 0, 0)
 
@@ -391,7 +439,7 @@ function InterestAreaSpawner:notifyMobileKilled(pCreature, pKiller)
 	end
 
 	-- Drop the Observer
-	dropObserver(OBJECTDESTRUCTION, name, "notifyMobileKilled", pMobile)
+	dropObserver(OBJECTDESTRUCTION, name, "notifyMobileKilled", pCreature)
 
 	local spawnerID = CreatureObject(pCreature):getSpawnerID()
 	local pSpawner = getSceneObject(spawnerID)

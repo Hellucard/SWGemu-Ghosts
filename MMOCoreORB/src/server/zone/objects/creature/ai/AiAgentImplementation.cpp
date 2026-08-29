@@ -1740,7 +1740,10 @@ int AiAgentImplementation::handleObjectMenuSelect(CreatureObject* player, byte s
 	if (isDead() && !isPet()) {
 		switch (selectedID) {
 		case 35:
-			player->executeObjectControllerAction(STRING_HASHCODE("loot"), getObjectID(), "");
+			// Route the corpse radial "Loot" action through the area-loot path.
+			// LootCommand retains the normal ownership, group, corpse, range and
+			// inventory checks for every nearby corpse it processes.
+			player->executeObjectControllerAction(STRING_HASHCODE("loot"), getObjectID(), "area");
 
 			return 0;
 		case 36:

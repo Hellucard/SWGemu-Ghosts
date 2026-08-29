@@ -1,3 +1,4 @@
+includeFile("groups/hk47_loot.lua")
 includeFile("groups/armor_attachments.lua")
 includeFile("groups/clothing_attachments.lua")
 includeFile("groups/coa_encoded_disk_fragments.lua")
@@ -71,6 +72,11 @@ includeFile("groups/corellian_corvette/disk_loot.lua")
 includeFile("groups/corellian_corvette/r2droid_loot.lua")
 
 -- creature sub-folder
+includeFile("groups/tierone.lua")
+includeFile("groups/tiertwo.lua")
+includeFile("groups/tierthree.lua")
+includeFile("groups/tierdiamond.lua")
+includeFile("groups/worldbosscrate.lua")
 includeFile("groups/creature/brackaset_common.lua")
 includeFile("groups/creature/fambaa_common.lua")
 includeFile("groups/creature/giant_dune_kimo_common.lua")
@@ -722,6 +728,9 @@ includeFile("groups/weapon/ranged_weapons_common.lua")
 includeFile("groups/weapon/ranged_weapons.lua")
 includeFile("groups/weapon/rifles.lua")
 includeFile("groups/weapon/weapons_all.lua")
+
+-- Fifth-generation lightsaber schematic group restored from Ghosts_old.
+includeFile("groups/lightsabers/ls_gen5_group.lua")
 
 -- wearables sub-folder
 includeFile("groups/wearables/wearables_all.lua")

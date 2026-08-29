@@ -1351,7 +1351,11 @@ bool PlanetManagerImplementation::isSpawningPermittedAt(float x, float y, float 
 		if (area == nullptr)
 			continue;
 
-		if (area->isCityRegion() || area->isNoSpawnArea()) {
+		// NPC city boundaries and spawn exclusions are separate concerns. Most
+		// stock cities carry both flags, but Coronet intentionally keeps its city
+		// services across the original radius while limiting NOSPAWNAREA to the
+		// central 10 metres for its beginner spawn area.
+		if (area->isNoSpawnArea()) {
 			return false;
 		}
 

@@ -149,7 +149,7 @@ void ResourceSpawner::loadResourceSpawns() {
 
 		{
 			Locker locker(resourceSpawn);
-			resourceSpawn->clampAttributeRange(500, 1000);
+			resourceSpawn->quantizeAttributeRange(500, 1000, 50);
 		}
 
 		// Create spawn maps for zones that were disabled when the resource spawned
@@ -526,9 +526,7 @@ ResourceSpawn* ResourceSpawner::createResourceSpawn(const String& type,
 
 	for (int i = 0; i < resourceEntry->getAttributeCount(); ++i) {
 		auto attrib = resourceEntry->getAttribute(i);
-		int minimum = attrib->getMinimum() < 500 ? 500 : attrib->getMinimum();
-		int maximum = attrib->getMaximum() < minimum ? minimum : attrib->getMaximum();
-		int randomValue = randomizeValue(minimum, maximum);
+		int randomValue = 500 + (System::random(10) * 50);
 		String attribName = attrib->getName();
 		int index = attrib->getIndex();
 		newSpawn->addAttribute(attribName, randomValue);

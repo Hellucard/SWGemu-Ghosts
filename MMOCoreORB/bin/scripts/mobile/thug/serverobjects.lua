@@ -77,3 +77,14 @@ includeFile("thug/veteran_explorer.lua")
 includeFile("thug/warder.lua")
 includeFile("thug/wastrel.lua")
 includeFile("thug/wookiee_brawler.lua")
+
+-- Ghosts custom Jedi unlock/trial mobiles. These templates are spawned by
+-- gatekeeper_conversation.lua, holocron.lua, and master_trial.lua and must be
+-- registered before those screenplays run.
+includeFile("thug/the_false_sith.lua")
+includeFile("thug/revan_dark_lord_novice.lua")
+includeFile("thug/revan_grand_master_novice.lua")
+includeFile("thug/revan_dark_lord.lua")
+includeFile("thug/revan_grand_master.lua")
+includeFile("thug/revan_reborn.lua")
+includeFile("custom_content/som/revan_clone.lua")

@@ -587,6 +587,12 @@ class PlayerManager extends Observer implements Logger {
 		int stamina, int mind, int focus, int willpower);
 
 	/**
+	 * Applies or replaces the free medical-droid enhancement as one dedicated
+	 * buff, without disturbing Doctor or Entertainer buffs.
+	 */
+	public native boolean applyMedicalDroidEnhancement(CreatureObject player, int duration, int amount);
+
+	/**
 	 * Creates and adds buff to Player
 	 * @pre { player is locked }
 	 * @post { player is locked }

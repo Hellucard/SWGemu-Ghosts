@@ -104,8 +104,6 @@ void WearableObjectImplementation::generateSockets(CraftingValues* craftingValue
 
 	if (generatedCount > MAXSOCKETS)
 		generatedCount = MAXSOCKETS;
-	else if (generatedCount > 3 && generatedCount <= 3.75f)
-		generatedCount = floor(generatedCount);
 
 	usedSocketCount = 0;
 	socketCount = (int)generatedCount;
@@ -120,7 +118,7 @@ void WearableObjectImplementation::applyAttachment(CreatureObject* player, Attac
 		return;
 	}
 
-	if (getRemainingSockets() < 1 || wearableSkillMods.size() > 5) {
+	if (getRemainingSockets() < 1 || wearableSkillMods.size() >= MAXSOCKETS) {
 		return;
 	}
 
@@ -251,4 +249,3 @@ String WearableObjectImplementation::repairAttempt(int repairChance) {
 
 	return message;
 }
-

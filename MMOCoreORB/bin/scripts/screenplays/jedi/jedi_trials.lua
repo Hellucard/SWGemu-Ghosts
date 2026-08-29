@@ -74,6 +74,12 @@ function JediTrials:onPlayerLoggedIn(pPlayer)
 	end
 
 	KnightTrials:onPlayerLoggedIn(pPlayer)
+
+	-- Restore permanent rank schematics for characters that earned their
+	-- DJL/GJM boxes before the generation schematics were installed.
+	if MasterTrial ~= nil then
+		MasterTrial:grantRankLightsaberSchematics(pPlayer)
+	end
 end
 
 function JediTrials:droppedSkillDuringTrials(pPlayer, pSkill)

@@ -30,7 +30,7 @@ rockmite = Creature:new {
 	hues = { 8, 9, 10, 11, 12, 13, 14, 15 },
 	controlDeviceTemplate = "object/intangible/pet/rock_mite_hue.iff",
 	scale = 0.6,
-	lootGroups = {},
+	lootGroups = {{groups = {{group = "junk", chance = 7000000}, {group = "wearables_common", chance = 1000000}, {group = "armor_all", chance = 1500000}, {group = "melee_weapons", chance = 500000}}, lootChance = 3000000}},
 
 	-- Primary and secondary weapon should be different types (rifle/carbine, carbine/pistol, rifle/unarmed, etc)
 	-- Unarmed should be put on secondary unless the mobile doesn't use weapons, in which case "unarmed" should be put primary and "none" as secondary

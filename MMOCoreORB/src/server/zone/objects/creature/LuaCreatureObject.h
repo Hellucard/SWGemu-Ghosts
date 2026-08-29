@@ -117,9 +117,11 @@ namespace creature {
 		int getGroupID(lua_State* L);
 		int enhanceCharacter(lua_State* L);
 		int applyMedicalServiceBuff(lua_State* L);
+		int applyMedicalDroidEnhancement(lua_State* L);
 		int setWounds(lua_State* L);
 		int setShockWounds(lua_State* L);
 		int getForceSensitiveSkillCount(lua_State* L);
+		int getLearnedProfessionSkillBoxCount(lua_State* L);
 		int villageKnightPrereqsMet(lua_State* L);
 		int getDamageDealerList(lua_State* L);
 		int getHealingThreatList(lua_State* L);

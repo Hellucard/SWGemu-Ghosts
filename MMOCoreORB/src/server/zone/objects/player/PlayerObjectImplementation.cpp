@@ -487,6 +487,24 @@ int PlayerObjectImplementation::calculateBhReward() {
 void PlayerObjectImplementation::sendBaselinesTo(SceneObject* player) {
 	debug() << "sendBaselinesTo(" << player->getObjectID() << ")";
 
+	// Older custom waypoint callers could persist an uninitialized waypoint
+	// before validating the planet argument. These objects have no usable
+	// destination and cause the client to receive entries at an unknown planet
+	// and (0, 0) on every login. Remove only waypoints with an invalid planet;
+	// a legitimate waypoint at coordinate (0, 0) retains a nonzero planet CRC.
+	if (player == parent.get().get()) {
+		for (int i = waypointList.size() - 1; i >= 0; --i) {
+			WaypointObject* waypoint = waypointList.getValueAt(i);
+
+			if (waypoint != nullptr && waypoint->getPlanetCRC() == 0) {
+				const uint64 waypointID = waypoint->getObjectID();
+				warning() << "Removing invalid persisted waypoint " << waypointID
+					<< " during player login";
+				removeWaypoint(waypointID, false, true);
+			}
+		}
+	}
+
 	BaseMessage* play3 = new PlayerObjectMessage3(asPlayerObject());
 	player->sendMessage(play3);
 
@@ -825,6 +843,19 @@ void PlayerObjectImplementation::setWaypoint(WaypointObject* waypoint, bool noti
 }
 
 void PlayerObjectImplementation::addWaypoint(WaypointObject* waypoint, bool checkName, bool notifyClient) {
+	if (waypoint == nullptr)
+		return;
+
+	if (waypoint->getPlanetCRC() == 0) {
+		warning() << "Rejecting waypoint " << waypoint->getObjectID()
+			<< " because it has no valid planet";
+
+		if (waypoint->isPersistent())
+			waypoint->destroyObjectFromDatabase(true);
+
+		return;
+	}
+
 	uint64 waypointID = waypoint->getObjectID();
 
 	if (waypointList.contains(waypointID)) {

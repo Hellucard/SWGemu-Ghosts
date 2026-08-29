@@ -41,7 +41,7 @@
 --which carries forward this exception.
 
 --Time, in seconds, that a shuttle is away for
-shuttleportAwayTime = 300
+shuttleportAwayTime = 60
 starportAwayTime = 60
 
 --Time, in seconds, that a shuttle takes to land
@@ -49,8 +49,140 @@ shuttleportLandingTime = 11
 starportLandingTime = 14
 
 --Time, in seconds, that a shuttle is landed for
-shuttleportLandedTime = 120
-starportLandedTime = 120
+shuttleportLandedTime = 60
+starportLandedTime = 60
+
+-- Custom ground-zone configuration. PlanetManager loads this file directly;
+-- keeping these tables here is required for travel, snapshots, badges and
+-- per-zone manager initialization.
+dungeon2 = {
+	weatherEnabled = 0,
+	gcwEnabled = 0,
+	planetTravelPoints = {},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+coruscant = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Collective Commerce District", x = -1851, z = 40, y = -175, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Monument Square", x = 1538, z = 40, y = 779, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Entertainment District", x = 2248, z = 0, y = -4546, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Spaceport District Shuttle", x = -28, z = 40, y = 3202, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Coruscant Spaceport", x = -96, z = 40, y = 3149, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+geonosis = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Geonosis City", x = -8, z = 5, y = -24, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+hoth = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Scavenger Outpost", x = 0, z = 0, y = -2000, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+hutta = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Bilbousa Starport", x = -789, z = 80, y = 1769, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+jakku = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Battle Of Jakku", x = -4263, z = 6, y = -2411, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+kaas = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "an Imperial Garrison", x = -5163, z = 80, y = -2238, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+kashyyyk = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Kachirho Starport", x = -669.73, z = 18.85, y = -148.48, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+korriban = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Korriban Starport", x = -1751, z = 91, y = -641, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+mandalore = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Bralsin", x = -5689, z = 0, y = -5034, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Keldabe Starport", x = 1568, z = 4, y = -6415, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+		{name = "Keldabe Shuttleport", x = 1432, z = 1.9, y = -6163, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Sundari", x = 6275, z = 1, y = -6211, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Norg Bral", x = -6648, z = 30, y = 5583, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Enceri", x = 4713, z = 2, y = 7154, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+		{name = "Shuror", x = 1068, z = 1, y = 2733, interplanetaryTravelAllowed = 0, incomingTravelAllowed = 1, landingRange = 3},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+mustafar = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Mensix Mining Facility", x = -2475, z = 230.1, y = 1624.7, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
+
+taanab = {
+	weatherEnabled = 0,
+	gcwEnabled = 1,
+	planetTravelPoints = {
+		{name = "Pandath", x = 2100, z = 45, y = 5400, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+		{name = "Starhunter Station", x = 3610, z = 31.7, y = -5425, interplanetaryTravelAllowed = 1, incomingTravelAllowed = 1, landingRange = 6},
+	},
+	badgeAreas = {},
+	planetObjects = {},
+}
 
 
 corellia = {

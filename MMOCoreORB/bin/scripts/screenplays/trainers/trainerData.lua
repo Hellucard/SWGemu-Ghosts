@@ -210,6 +210,13 @@ trainerSkills = {
 		"crafting_armorsmith_complexity_02",
 		"crafting_armorsmith_complexity_03",
 		"crafting_armorsmith_complexity_04"
+    -- Grand Master
+    --"crafting_elite_master_armorsmith_novice",
+		--"crafting_grand_master_armorsmith",
+    --"crafting_elite_master_armorsmith_01",
+    --"crafting_elite_master_armorsmith_02",
+    --"crafting_elite_master_armorsmith_03",
+    --"crafting_elite_master_armorsmith_04"
 	},
 
 	trainer_bioengineer = {
@@ -884,5 +891,149 @@ trainerSkills = {
 		"force_discipline_defender_preternatural_defense_02",
 		"force_discipline_defender_preternatural_defense_03",
 		"force_discipline_defender_preternatural_defense_04"
+	},
+	
+	trainer_meleebountyhunter = {
+		"combat_meleebountyhunter_novice",
+		"combat_meleebountyhunter_master",
+		"combat_meleebountyhunter_investigation_01",
+		"combat_meleebountyhunter_investigation_02",
+		"combat_meleebountyhunter_investigation_03",
+		"combat_meleebountyhunter_investigation_04",
+		"combat_meleebountyhunter_polearm_01",
+		"combat_meleebountyhunter_polearm_02",
+		"combat_meleebountyhunter_polearm_03",
+		"combat_meleebountyhunter_polearm_04",
+		"combat_meleebountyhunter_1hsword_01",
+		"combat_meleebountyhunter_1hsword_02",
+		"combat_meleebountyhunter_1hsword_03",
+		"combat_meleebountyhunter_1hsword_04",
+		"combat_meleebountyhunter_2hsword_01",
+		"combat_meleebountyhunter_2hsword_02",
+		"combat_meleebountyhunter_2hsword_03",
+		"combat_meleebountyhunter_2hsword_04"
+	},
+	
+	trainer_spy = {
+		"combat_spy_novice",
+		"combat_spy_master",
+		"combat_spy_attacks_01",
+		"combat_spy_attacks_02",
+		"combat_spy_attacks_03",
+		"combat_spy_attacks_04",
+		"combat_spy_sneak_01",
+		"combat_spy_sneak_02",
+		"combat_spy_sneak_03",
+		"combat_spy_sneak_04",
+		"combat_spy_poison_01",
+		"combat_spy_poison_02",
+		"combat_spy_poison_03",
+		"combat_spy_poison_04",
+		"combat_spy_trap_01",
+		"combat_spy_trap_02",
+		"combat_spy_trap_03",
+		"combat_spy_trap_04"
+	},
+	
+	trainer_combatjedigrayelderrankcouncil = {
+		"force_rank_gray_novice",
+		"force_rank_gray_master",
+		"force_rank_gray_rank_01",
+		"force_rank_gray_rank_02",
+		"force_rank_gray_rank_03",
+		"force_rank_gray_rank_04",
+		"force_rank_gray_rank_05",
+		"force_rank_gray_rank_06",
+		"force_rank_gray_rank_07",
+		"force_rank_gray_rank_08",
+		"force_rank_gray_rank_09",
+		"force_rank_gray_rank_10"
+	},
+
+	trainer_combatjedigrayelderrank = {
+		"combat_jedi_elder_rank_novice",
+		"combat_jedi_elder_rank_master",
+		"combat_jedi_elder_rank_dark_01",
+		"combat_jedi_elder_rank_dark_02",
+		"combat_jedi_elder_rank_dark_03",
+		"combat_jedi_elder_rank_dark_04"
+	},
+
+	trainer_combatjedigrayelder = {
+		"combat_jedi_elder_novice",
+		"combat_jedi_elder_master",
+		"combat_jedi_elder_lightning_01",
+		"combat_jedi_elder_lightning_02",
+		"combat_jedi_elder_lightning_03",
+		"combat_jedi_elder_lightning_04",
+		"combat_jedi_elder_mental_01",
+		"combat_jedi_elder_mental_02",
+		"combat_jedi_elder_mental_03",
+		"combat_jedi_elder_mental_04",
+		"combat_jedi_elder_debuff_01",
+		"combat_jedi_elder_debuff_02",
+		"combat_jedi_elder_debuff_03",
+		"combat_jedi_elder_debuff_04",
+		"combat_jedi_elder_push_01",
+		"combat_jedi_elder_push_02",
+		"combat_jedi_elder_push_03",
+		"combat_jedi_elder_push_04"
+	},
+
+	trainer_combatjedigray = {
+		"combat_jedi_novice",
+		"combat_jedi_master",
+		"combat_jedi_dark_01",
+		"combat_jedi_dark_02",
+		"combat_jedi_dark_03",
+		"combat_jedi_dark_04",
+		"combat_jedi_light_01",
+		"combat_jedi_light_02",
+		"combat_jedi_light_03",
+		"combat_jedi_light_04"
+	},
+
+	-- Grand Jedi Master trainer (Light side — jedi_grand_master tree)
+	trainer_jedi_grand_master = {
+		"jedi_grand_master_novice",
+		"jedi_grand_master_lightsaber_01",
+		"jedi_grand_master_lightsaber_02",
+		"jedi_grand_master_lightsaber_03",
+		"jedi_grand_master_lightsaber_04",
+		"jedi_grand_master_force_powers_01",
+		"jedi_grand_master_force_powers_02",
+		"jedi_grand_master_force_powers_03",
+		"jedi_grand_master_force_powers_04",
+		"jedi_grand_master_defence_01",
+		"jedi_grand_master_defence_02",
+		"jedi_grand_master_defence_03",
+		"jedi_grand_master_defence_04",
+		"jedi_grand_master_guardian_01",
+		"jedi_grand_master_guardian_02",
+		"jedi_grand_master_guardian_03",
+		"jedi_grand_master_guardian_04",
+		"jedi_grand_master_master"
+	},
+
+	-- Dark Jedi Lord trainer (Dark side — jedi_dark_lord tree)
+	trainer_jedi_dark_lord = {
+		"jedi_dark_lord_novice",
+		"jedi_dark_lord_lightsaber_01",
+		"jedi_dark_lord_lightsaber_02",
+		"jedi_dark_lord_lightsaber_03",
+		"jedi_dark_lord_lightsaber_04",
+		"jedi_dark_lord_force_powers_01",
+		"jedi_dark_lord_force_powers_02",
+		"jedi_dark_lord_force_powers_03",
+		"jedi_dark_lord_force_powers_04",
+		"jedi_dark_lord_defence_01",
+		"jedi_dark_lord_defence_02",
+		"jedi_dark_lord_defence_03",
+		"jedi_dark_lord_defence_04",
+		"jedi_dark_lord_tyrant_01",
+		"jedi_dark_lord_tyrant_02",
+		"jedi_dark_lord_tyrant_03",
+		"jedi_dark_lord_tyrant_04",
+		"jedi_dark_lord_master"
 	},
 }

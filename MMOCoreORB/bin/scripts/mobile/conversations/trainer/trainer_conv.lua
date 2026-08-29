@@ -148,3 +148,5 @@ createTrainerConversationTemplate("weaponsmithTrainerConvoTemplate", "trainer_we
 
 createTrainerConversationTemplate("fsTrainerConvoTemplate", "trainer_fs")
 createTrainerConversationTemplate("jediTrainerConvoTemplate", "trainer_jedi")
+createTrainerConversationTemplate("grandJediMasterTrainerConvoTemplate", "trainer_jedi_grand_master")
+createTrainerConversationTemplate("darkJediLordTrainerConvoTemplate", "trainer_jedi_dark_lord")

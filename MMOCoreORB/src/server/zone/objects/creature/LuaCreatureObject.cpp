@@ -145,9 +145,11 @@ Luna<LuaCreatureObject>::RegType LuaCreatureObject::Register[] = {
 		{ "getGroupID", &LuaCreatureObject::getGroupID },
 		{ "enhanceCharacter", &LuaCreatureObject::enhanceCharacter },
 		{ "applyMedicalServiceBuff", &LuaCreatureObject::applyMedicalServiceBuff },
+		{ "applyMedicalDroidEnhancement", &LuaCreatureObject::applyMedicalDroidEnhancement },
 		{ "setWounds", &LuaCreatureObject::setWounds },
 		{ "setShockWounds", &LuaCreatureObject::setShockWounds },
 		{ "getForceSensitiveSkillCount", &LuaCreatureObject::getForceSensitiveSkillCount },
+		{ "getLearnedProfessionSkillBoxCount", &LuaCreatureObject::getLearnedProfessionSkillBoxCount },
 		{ "villageKnightPrereqsMet", &LuaCreatureObject::villageKnightPrereqsMet },
 		{ "isOnLeave", &LuaTangibleObject::isOnLeave },
 		{ "isOvert", &LuaTangibleObject::isOvert },
@@ -1103,6 +1105,17 @@ int LuaCreatureObject::applyMedicalServiceBuff(lua_State* L) {
 	return 0;
 }
 
+int LuaCreatureObject::applyMedicalDroidEnhancement(lua_State* L) {
+	int duration = lua_tointeger(L, -2);
+	int amount = lua_tointeger(L, -1);
+
+	PlayerManager* playerManager = realObject->getZoneServer()->getPlayerManager();
+	bool applied = playerManager->applyMedicalDroidEnhancement(realObject, duration, amount);
+	lua_pushboolean(L, applied);
+
+	return 1;
+}
+
 int LuaCreatureObject::setWounds(lua_State* L) {
 	int amount = lua_tointeger(L, -1);
 	int pool = lua_tointeger(L, -2);
@@ -1127,6 +1140,28 @@ int LuaCreatureObject::getForceSensitiveSkillCount(lua_State* L) {
 
 	lua_pushnumber(L, result);
 
+	return 1;
+}
+
+int LuaCreatureObject::getLearnedProfessionSkillBoxCount(lua_State* L) {
+	const SkillList* skills = realObject->getSkillList();
+	int count = 0;
+
+	if (skills != nullptr) {
+		for (int i = 0; i < skills->size(); ++i) {
+			const Skill* skill = skills->get(i);
+			if (skill == nullptr)
+				continue;
+
+			const String& name = skill->getSkillName();
+			if (name.beginsWith("combat_") || name.beginsWith("crafting_") ||
+				name.beginsWith("outdoors_") || name.beginsWith("science_") ||
+				name.beginsWith("social_") || name.beginsWith("pilot_"))
+				++count;
+		}
+	}
+
+	lua_pushinteger(L, count);
 	return 1;
 }
 

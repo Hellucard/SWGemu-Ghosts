@@ -64,7 +64,10 @@ function JunkDealer:getEligibleJunk(pPlayer, dealerType, skipItem)
 			local sceno = SceneObject(pItem)
 
 			if sceno:getObjectID() ~= skipItem then
-				if tano:getJunkDealerNeeded() & dealerNum > 0 and tano:getCraftersName() == "" and not tano:isBroken() and not tano:isSliced() and not tano:isNoTrade() and sceno:getContainerObjectsSize() == 0 then
+				-- Crafted equipment can carry the same template-defined junk type
+				-- and sell value as looted equipment. Authorship is not a safety
+				-- restriction; no-trade, broken, sliced and container checks remain.
+				if tano:getJunkDealerNeeded() & dealerNum > 0 and tano:getJunkValue() > 0 and not tano:isBroken() and not tano:isSliced() and not tano:isNoTrade() and sceno:getContainerObjectsSize() == 0 then
 					local name = sceno:getDisplayedName()
 					local value = tano:getJunkValue()
 					local textTable = {"[" .. value .. "] " .. name, sceno:getObjectID()}

@@ -112,6 +112,10 @@ function VillageJediManager:onPlayerLoggedOut(pPlayer)
 	FsPhase1:onLoggedOut(pPlayer)
 	FsPhase2:onLoggedOut(pPlayer)
 	FsPhase3:onLoggedOut(pPlayer)
+
+	if GatekeeperConversation ~= nil and GatekeeperConversation.onPlayerLoggedOut ~= nil then
+		GatekeeperConversation:onPlayerLoggedOut(pPlayer)
+	end
 end
 
 --Check for force skill prerequisites

@@ -38,6 +38,13 @@ public:
 		if (zoneServer == nullptr)
 			return GENERALERROR;
 
+		String lootArguments = arguments.toString();
+
+		// Area loot does not require a selected corpse. Resolve it before the
+		// single-target validation below so /loot area can scan nearby corpses.
+		if (lootArguments.beginsWith("area"))
+			return lootArea(creature);
+
 		ManagedReference<SceneObject*> targetObject = zoneServer->getObject(target);
 
 		if (targetObject == nullptr || !targetObject->isAiAgent())
@@ -55,11 +62,6 @@ public:
 			creature->sendSystemMessage("@error_message:target_out_of_range"); //"Your target is out of range for this action."
 			return GENERALERROR;
 		}
-
-		String lootArguments = arguments.toString();
-
-		if (lootArguments.beginsWith("area"))
-			return lootArea(creature);
 
 		Locker locker(agent, creature);
 

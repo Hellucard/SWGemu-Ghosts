@@ -73,8 +73,10 @@ Core3 = {
 	MantisHost = "127.0.0.1",
 	MantisPort = 3306,
 	MantisName = "swgemu",
-	MantisUser = "swgemu",
-	MantisPass = "123456",
+	-- Use the same database account as Core3. The previous legacy Mantis
+	-- credentials no longer had access to this database.
+	MantisUser = "Boostersteel",
+	MantisPass = "Vegeta1982",
 	MantisPrfx = "mantis_", -- The prefix for your mantis tables.
 
 	------Metrics Server Config------
@@ -161,20 +163,19 @@ Core3 = {
 	------TRE config------
 	TrePath = "/root/tre/",
 	TreFiles = {
-		"Race_override.tre",
 		"top_house_assets.tre",
 		"patch_zzz_01.tre",
-		"returns11.tre",
-		"returns10.tre",
-		"returns9.tre",
-		"returns8.tre",
-		"returns7.tre",
-		"returns6.tre",
-		"returns5.tre",
-		"returns4.tre",
-		"returns3.tre",
-		"returns2.tre",
-		"returns1.tre",
+		"ghosts11.tre",
+		"ghosts10.tre",
+		"ghosts9.tre",
+		"ghosts8.tre",
+		"ghosts7.tre",
+		"ghosts6.tre",
+		"ghosts5.tre",
+		"ghosts4.tre",
+		"ghosts3.tre",
+		"ghosts2.tre",
+		"ghosts1.tre",
 		"mtg_patch_022.tre",
 		"mtg_planets.tre",
 		"mtg_patch_021.tre",
@@ -276,7 +277,7 @@ Core3 = {
 
 	------Character Config------
 	CleanupMailCount = 25000,
-	DeleteCharacters = 10, -- How often in minutes to purge deleted characters
+	DeleteCharacters = 1, -- How often in minutes to purge deleted characters
 	PlayerCreationManager = {
 		MaxCharactersPerGalaxy = 8,
 	},

@@ -853,12 +853,6 @@ void EntertainingSessionImplementation::activateEntertainerBuff(CreatureObject* 
 		if (isInDenyServiceList(creature))
 			return;
 
-		ManagedReference<PlayerObject*> entPlayer = entertainer->getPlayerObject();
-		//Check if the patron is a valid buff target
-		//Whether it be passive(in the same group) or active (/setPerform target)
-		if ((!entertainer->isGrouped() || entertainer->getGroupID() != creature->getGroupID()) && entPlayer->getPerformanceBuffTarget() != creature->getObjectID())
-			return;
-
 		if (creature->isIncapacitated() || creature->isDead()) {
 			return;
 		}
@@ -875,12 +869,21 @@ void EntertainingSessionImplementation::activateEntertainerBuff(CreatureObject* 
 			return;
 		}
 
-		//1 minute minimum listen/watch time
+		// Fifteen-second minimum listen/watch time.
 		int timeElapsed = time(0) - getEntertainerBuffStartTime(creature, performanceType);
-		if (timeElapsed < 60) {
-			creature->sendSystemMessage("You must listen or watch a performer for at least 1 minute in order to gain the entertainer buffs.");
+		if (timeElapsed < 15) {
+			creature->sendSystemMessage("You must listen or watch a performer for at least 15 seconds in order to gain the entertainer buffs.");
 			return;
 		}
+
+		// The patron completed the required fifteen seconds. Fill the stored
+		// values here as well as in the periodic tick so stopping at exactly the
+		// threshold still awards the complete performer-strength buff.
+		setEntertainerBuffDuration(creature, performanceType, 120.0f);
+		float completedStrength = performanceType == PerformanceType::DANCE
+			? (float)entertainer->getSkillMod("healing_dance_mind")
+			: (float)entertainer->getSkillMod("healing_music_mind");
+		setEntertainerBuffStrength(creature, performanceType, Math::min(125.0f, completedStrength));
 
 		// Returns a % of base stat
 		int campModTemp = 100;
@@ -987,14 +990,22 @@ void EntertainingSessionImplementation::increaseEntertainerBuff(CreatureObject* 
 	if (!canGiveEntertainBuff())
 		return;
 
-	ManagedReference<PlayerObject*> entPlayer = entertainer->getPlayerObject();
-	//Check if the patron is a valid buff target
-	//Whether it be passive(in the same group) or active (/setPerform target)
-	if ((!entertainer->isGrouped() || entertainer->getGroupID() != patron->getGroupID()) && entPlayer->getPerformanceBuffTarget() != patron->getObjectID())
-		return;
-
 	if (isInDenyServiceList(patron))
 		return;
+
+	// Any player actively watching or listening is eligible. Once the patron
+	// has stayed for fifteen seconds, fill the stored buff to the performer's
+	// real cap so stopping the performance applies the complete buff.
+	if (time(0) - getEntertainerBuffStartTime(patron, performance->getType()) >= 15) {
+		setEntertainerBuffDuration(patron, performance->getType(), 120.0f);
+
+		float maxStrength = isDancing()
+			? (float)entertainer->getSkillMod("healing_dance_mind")
+			: (float)entertainer->getSkillMod("healing_music_mind");
+
+		setEntertainerBuffStrength(patron, performance->getType(), Math::min(125.0f, maxStrength));
+		return;
+	}
 
 	float buffAcceleration = 1 + ((float)entertainer->getSkillMod("accelerate_entertainer_buff") / 100.f);
 

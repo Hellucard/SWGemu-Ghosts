@@ -252,8 +252,10 @@ includeFile("groups/wearables/ghosts_force_robes.lua")
 includeFile("groups/armor/ghosts_armor_parts.lua")
 
 -- Independent global armor rolls applied by LootManagerImplementation.
-includeFile("groups/armor/global_standard_armor.lua")
-includeFile("groups/armor/global_custom_armor.lua")
+-- This file is itself included from scripts/loot/serverobjects.lua, so paths
+-- are resolved relative to scripts/loot rather than this custom directory.
+includeFile("../custom_scripts/loot/groups/armor/global_standard_armor.lua")
+includeFile("../custom_scripts/loot/groups/armor/global_custom_armor.lua")
 
 -- Lootable Jedi robe schematic entries remain disabled until the matching
 -- shared schematic templates arrive with the schematic asset transfer.

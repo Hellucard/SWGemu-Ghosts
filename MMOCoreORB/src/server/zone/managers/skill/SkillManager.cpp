@@ -23,6 +23,7 @@
 #include "server/zone/objects/player/sui/messagebox/SuiMessageBox.h"
 #include "server/zone/objects/player/sui/callbacks/SurrenderPilotSuiCallback.h"
 #include "templates/faction/Factions.h"
+#include "server/zone/managers/director/ScreenPlayTask.h"
 
 SkillManager::SkillManager()
 	: Logger("SkillManager") {
@@ -375,6 +376,12 @@ bool SkillManager::awardSkill(const String& skillName, CreatureObject* creature,
 		}
 
 		creature->addSkill(skill, notifyClient);
+
+		// The custom Jedi discovery is event-driven. Run the Lua-side check after
+		// the newly learned skill has been committed to the creature's skill list.
+		Reference<Task*> discoveryCheck = new ScreenPlayTask(creature,
+			"onSkillLearned", "HolocronJedi", skillName);
+		discoveryCheck->schedule(250);
 
 		//Add skill modifiers
 		auto skillModifiers = skill->getSkillModifiers();

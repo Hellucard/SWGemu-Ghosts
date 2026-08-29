@@ -1,3 +1,9 @@
+JediManager = require("managers.jedi.jedi_manager")
+local Logger = require("utils.logger")
+local QuestManager = require("managers.quest.quest_manager")
+
+jediManagerName = "VillageJediManager"
+
 NOTINABUILDING = 0
 
 NUMBEROFTREESTOMASTER = 3
@@ -38,9 +44,6 @@ function VillageJediManager:checkForceStatusCommand(pPlayer)
 	end
 
 	Glowing:checkForceStatusCommand(pPlayer)
-
-	-- Holocron Jedi system progress report
-	HolocronJedi:checkForceStatusCommand(pPlayer)
 end
 
 -- Handling of the onPlayerLoggedIn event. The progression of the player will be checked and observers will be registered.
